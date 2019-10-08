@@ -1,7 +1,11 @@
 %option yylineno
-INT 0|[1-9][0-9]*
+BADHEX (0x|0X)(([0-9]*[g-zG-Z][0-9]*)*)
+BADOCT 0((0|8|9)+)
+BADPREFIX 0[a-wA-Wy-zY-Z]([0-9]*[a-zA-Z]*[0-9]*)*
+DEC 0|[1-9][0-9]*
 OCT 0(0|[1-7][0-7]*)
 HEX (0x|0X)(0|[1-9a-fA-F][0-9a-fA-F]*)
+INT {DEC}|{OCT}|{HEX}
 FLOAT {INT}\.[0-9]+
 TYPE int|float
 STRUCT struct
@@ -30,6 +34,9 @@ RB \]
 LC \{
 RC \}
 %%
+{BADHEX} { printf("Error type A:BADHEX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+{BADOCT} { printf("Error type A:BADOCT at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+{BADPREFIX} { printf("Error type A:BADPREFIX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
 {INT} { printf("INT: %s\n", yytext); }
 {FLOAT} { printf("FLOAT: %s\n", yytext); }
 {STRUCT} { printf("STRUCT: %s\n", yytext); }
