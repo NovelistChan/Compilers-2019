@@ -3,8 +3,11 @@
 #include "lex.yy.c"
 %}
 
+/* declared types */
+
 /* declared tokens */
-%token INT FLOAT
+%token INT
+%token FLOAT
 %token ID
 %token SEMI COMMA
 %token ASSIGNOP

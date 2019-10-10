@@ -1,8 +1,15 @@
 %{
   #include "syntax.tab.h"
+  int yycolumn = 1;
+  #define YY_USER_ACTION
+    yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    yylloc.last_column = yycolumn + yyleng - 1; \
+    yycolumn += yyleng;
 %}
 
 %option yylineno
+%option yylval
 BADHEX (0x|0X)(([0-9]*[g-zG-Z][0-9]*)*)
 BADOCT 0((0|8|9)+)
 BADPREFIX 0[a-wA-Wy-zY-Z]([0-9]*[a-zA-Z]*[0-9]*)*
@@ -49,6 +56,7 @@ RC \}
 {ELSE} { return ELSE; }
 {WHILE} { return WHILE; }
 {TYPE} { return TYPE; }
+"\n" { yycolumn = 1; }
 {SPACE} { //printf("SPACE: %s\n", yytext); 
 }
 {ID} { return ID; }
