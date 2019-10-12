@@ -1,29 +1,29 @@
+#ifndef __SYNTAXTREE_H__
+#define __SYNTAXTREE_H__
+
 typedef enum {
-    END,
-    ID,
-    VAL
-} NodeType;
+  NOTEND,  // non-terminal
+  IDEND,   // terminal without value
+  VALEND   // terminal with value
+} NODE_TYPE;
 
 typedef struct treeNode{
-    TreeNode *children;//CHILD NODES
-    int childNum;//NUMBER OF CHILDREN
-    int lineno;//LOCATION
-    char val[32];//VALUE
-    /*union 
-    {
-        /* data *//*
-        int val_int;
-        float val_float;
-        char val_string[32];
-    } attr;//DATA VALUE ATTRIBUTION
-    */
-    NodeType nodeType;//TYPE
-    char *name;//NAME(TYPE)
-    TreeNode *next;//WHEN REFERRED AS A CHILD, THIS REPRESENTS ITS SIBLING
+    struct treeNode *children;//CHILD NODES
+//    int childNum; //NUMBER OF CHILDREN
+    int lineno; //LOCATION
+
+    NODE_TYPE type; //TYPE
+
+    char val[32]; //VALUE
+    char name[32]; //NAME
+
+    struct treeNode *next; //WHEN REFERRED AS A CHILD, THIS REPRESENTS ITS SIBLING
 } TreeNode;
 
-TreeNode *createNewNode(char* name, int lineno);
-TreeNode *createNewNodeID(char *name, int lineno, NodeType nodeType, char *val);
+TreeNode *createNewNodeNot(char* name, int lineno); // for type=NOTEND
+TreeNode *createNewNodeID(char* name);  // for type=IDEND
+TreeNode *createNewNodeVal(char* name, char* val); // for type=VALEND
 void insertNode(TreeNode *parent, TreeNode *child);
-void printTree(TreeNode *root);
+void printTree(TreeNode *root, int layer);
 
+#endif
