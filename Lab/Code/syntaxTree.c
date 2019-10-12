@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include"syntaxTree.h"
 
-TreeNode *createNewNode(int lineno, char *name) {
+TreeNode *createNewNode(char *name, int lineno) {
     TreeNode *newNode = (TreeNode *)malloc(sizeof(TreeNode));
     newNode->childNum = 0;
     newNode->children = NULL;

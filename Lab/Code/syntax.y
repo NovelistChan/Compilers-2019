@@ -1,6 +1,8 @@
 %{
-#include <stdio.h>
-#include "lex.yy.c"
+  #include <stdio.h>
+  #include "syntaxTree.h"
+  #include "lex.yy.c"
+  TreeNode *root;
 %}
 
 /* declared types */
@@ -23,47 +25,47 @@
 
 %%
 /* High-level Definitions  */
-Program : ExtDefList
+Program : ExtDefList { $$ = createNewNode("Program", @$.first_line); insertNode($$, $1); root = $$; }
   ;
-ExtDefList : ExtDef ExtDefList
-  | /* empty */
+ExtDefList : ExtDef ExtDefList { $$ = createNewNode("ExtDefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | /* empty */ { $$ = NULL; }
   ;
-ExtDef : Specifier ExtDecList SEMI
-  | Specifier SEMI
-  | Specifier FunDec CompSt
+ExtDef : Specifier ExtDecList SEMI { $$ = createNewNode("ExtDef", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Specifier SEMI { $$ = createNewNode("ExtDef", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | Specifier FunDec CompSt { $$ = createNewNode("ExtDef", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
-ExtDecList : VarDec
-  | VarDec COMMA ExtDecList
+ExtDecList : VarDec { $$ = createNewNode("ExtDecList", @$.first_line); insertNode($$, $1); }
+  | VarDec COMMA ExtDecList { $$ = createNewNode("ExtDecList", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
 
 /* Specifiers */
-Specifier : TYPE
-  | StructSpecifier
+Specifier : TYPE { $$ = createNewNode("Specifier", @$.first_line); insertNode($$, $1); }
+  | StructSpecifier { $$ = createNewNode("Specifier", @$.first_line); insertNode($$, $1); }
   ;
-StructSpecifier : STRUCT OptTag LC DefList RC
-  | STRUCT Tag
+StructSpecifier : STRUCT OptTag LC DefList RC { $$ = createNewNode("StructSpecifier", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); insertNode($$, $5); }
+  | STRUCT Tag { $$ = createNewNode("StructSpecifier", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
   ;
-OptTag : ID
-  | /* empty */
+OptTag : ID { $$ = createNewNode("OptTag", @$.first_line); insertNode($$, $1); }
+  | /* empty */ { $$ = NULL; }
   ;
-Tag : ID
+Tag : ID { $$ = createNewNode("Tag", @$.first_line); insertNode($$, $1); }
   ;
 
 /* Declarators */
-VarDec : ID
-  | VarDec LB INT RB
+VarDec : ID { $$ = createNewNode("VarDec", @$.first_line); insertNode($$, $1); }
+  | VarDec LB INT RB { $$ = createNewNode("VarDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); }
   ;
-FunDec : ID LP VarList RP
-  | ID LP RP
+FunDec : ID LP VarList RP { $$ = createNewNode("FunDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); }
+  | ID LP RP { $$ = createNewNode("FunDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
-VarList : ParamDec COMMA VarList
-  | ParamDec
+VarList : ParamDec COMMA VarList { $$ = createNewNode("VarList", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | ParamDec { $$ = createNewNode("VarList", @$.first_line); insertNode($$, $1); }
   ;
-ParamDec : Specifier VarDec
+ParamDec : Specifier VarDec { $$ = createNewNode("ParamDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
   ;
 
 /* Statements */
-CompSt : LC DefList StmtList RC
+CompSt : LC DefList StmtList RC { $$ = createNewNode("ParamDec")}
   ;
 StmtList : Stmt StmtList
   | /* empty */
