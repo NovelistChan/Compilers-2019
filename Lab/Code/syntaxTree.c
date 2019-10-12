@@ -1,4 +1,6 @@
 #include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
 #include"syntaxTree.h"
 
 TreeNode *createNewNode(char *name, int lineno) {
@@ -8,7 +10,6 @@ TreeNode *createNewNode(char *name, int lineno) {
     newNode->lineno = lineno;
     newNode->name = name;
     newNode->next = NULL;
-    return newNode;
 }
 
 void insertNode(TreeNode *parent, TreeNode *child) {

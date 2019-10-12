@@ -17,11 +17,13 @@ typedef struct treeNode{
         char val_string[32];
     } attr;//DATA VALUE ATTRIBUTION
     */
+    NodeType nodeType;//TYPE
     char *name;//NAME(TYPE)
     TreeNode *next;//WHEN REFERRED AS A CHILD, THIS REPRESENTS ITS SIBLING
 } TreeNode;
 
 TreeNode *createNewNode(char* name, int lineno);
+TreeNode *createNewNodeID(char *name, int lineno, NodeType nodeType, char *val);
 void insertNode(TreeNode *parent, TreeNode *child);
 void printTree(TreeNode *root);
 
