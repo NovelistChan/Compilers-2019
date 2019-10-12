@@ -1,15 +1,9 @@
 %{
   #include "syntax.tab.h"
-  int yycolumn = 1;
-  #define YY_USER_ACTION
-    yylloc.first_line = yylloc.last_line = yylineno; \
-    yylloc.first_column = yycolumn; \
-    yylloc.last_column = yycolumn + yyleng - 1; \
-    yycolumn += yyleng;
+  #include "syntaxTree.h"
 %}
 
 %option yylineno
-%option yylval
 BADHEX (0x|0X)(([0-9]*[g-zG-Z][0-9]*)*)
 BADOCT 0((0|8|9)+)
 BADPREFIX 0[a-wA-Wy-zY-Z]([0-9]*[a-zA-Z]*[0-9]*)*
@@ -46,38 +40,148 @@ LC \{
 RC \}
 %%
 {BADHEX} { printf("Error type A:BADHEX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+
 {BADOCT} { printf("Error type A:BADOCT at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+
 {BADPREFIX} { printf("Error type A:BADPREFIX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
-{INT} { return INT; }
-{FLOAT} { return FLOAT; }
-{STRUCT} { return STRUCT; }
-{RETURN} { return RETURN; }
-{IF} { return IF; }
-{ELSE} { return ELSE; }
-{WHILE} { return WHILE; }
-{TYPE} { return TYPE; }
-"\n" { yycolumn = 1; }
-{SPACE} { //printf("SPACE: %s\n", yytext); 
+
+{INT} {
+  yylval.type_node = createNewNodeVal("INT", yytext);
+  return INT;
 }
-{ID} { return ID; }
-{SEMI} { return SEMI; }
-{COMMA} { return COMMA; }
-{ASSIGNOP} { return ASSIGNOP; }
-{RELOP} { return RELOP; }
-{PLUS} { return PLUS; }
-{MINUS} { return MINUS; }
-{STAR} { return STAR; }
-{DIV} { return DIV; }
-{AND} { return AND; }
-{OR} { return OR; }
-{DOT} { return DOT; }
-{NOT} { return NOT; }
-{LP} { return LP; }
-{RP} { return RP; }
-{LB} { return LB; }
-{RB} { return RB; }
-{LC} { return LC; }
-{RC} { return RC; }
+
+{FLOAT} {
+  yylval.type_node = createNewNodeVal("FLOAT", yytext);
+  return FLOAT;
+}
+
+{STRUCT} {
+  yylval.type_node = createNewNodeID("STRUCT");
+  return STRUCT;
+}
+
+{RETURN} {
+  yylval.type_node = createNewNodeID("RETURN");
+  return RETURN;
+}
+
+{IF} {
+  yylval.type_node = createNewNodeID("IF");
+  return IF;
+}
+
+{ELSE} {
+  yylval.type_node = createNewNodeID("ELSE");
+  return ELSE;
+}
+
+{WHILE} {
+  yylval.type_node = createNewNodeID("WHILE");
+  return WHILE;
+}
+
+{TYPE} {
+  yylval.type_node = createNewNodeVal("TYPE", yytext);
+  return TYPE;
+}
+
+{SPACE} {}
+
+{ID} {
+  yylval.type_node = createNewNodeVal("ID", yytext);
+  return ID;
+}
+
+{SEMI} {
+  yylval.type_node = createNewNodeID("SEMI");
+  return SEMI;
+}
+
+{COMMA} {
+  yylval.type_node = createNewNodeID("COMMA");
+  return COMMA;
+}
+
+{ASSIGNOP} {
+  yylval.type_node = createNewNodeID("ASSIGNOP");
+  return ASSIGNOP;
+}
+
+{RELOP} {
+  yylval.type_node = createNewNodeVal("RELOP", yytext);
+  return RELOP;
+}
+
+{PLUS} {
+  yylval.type_node = createNewNodeID("PLUS");
+  return PLUS;
+}
+
+{MINUS} {
+  yylval.type_node = createNewNodeID("MINUS");
+  return MINUS;
+}
+
+{STAR} {
+  yylval.type_node = createNewNodeID("STAR");
+  return STAR;
+}
+
+{DIV} {
+  yylval.type_node = createNewNodeID("DIV");
+  return DIV;
+}
+
+{AND} {
+  yylval.type_node = createNewNodeID("AND");
+  return AND;
+}
+
+{OR} {
+  yylval.type_node = createNewNodeID("OR");
+  return OR;
+}
+
+{DOT} {
+  yylval.type_node = createNewNodeID("DOT");
+  return DOT;
+}
+
+{NOT} {
+  yylval.type_node = createNewNodeID("NOT");
+  return NOT;
+}
+
+{LP} {
+  yylval.type_node = createNewNodeID("LP");
+  return LP;
+}
+
+{RP} {
+  yylval.type_node = createNewNodeID("RP");
+  return RP;
+}
+
+{LB} {
+  yylval.type_node = createNewNodeID("LB");
+  return LB;
+}
+
+{RB} {
+  yylval.type_node = createNewNodeID("RB");
+  return RB;
+}
+
+{LC} {
+  yylval.type_node = createNewNodeID("LC");
+  return LC;
+}
+
+{RC} {
+  yylval.type_node = createNewNodeID("RC");
+  return RC;
+}
+
 . { printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
 %%
 
