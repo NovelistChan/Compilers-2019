@@ -5,6 +5,7 @@
 
 int yylex();
 extern int yylineno;
+TreeNode* root = NULL;
 %}
 
 /* declared types  */
@@ -51,101 +52,101 @@ extern int yylineno;
 
 %%
 /* High-level Definitions  */
-Program : ExtDefList
+Program : ExtDefList { $$ = createNewNodeNot("Program", @$.first_line); insertNode($$, $1); root = $$; printTree(root, 0);}
   ;
-ExtDefList : ExtDef ExtDefList
-  | /* empty */ {$$=NULL;}
+ExtDefList : ExtDef ExtDefList { $$ = createNewNodeNot("ExtDefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | /* empty */ { $$ = NULL; }
   ;
-ExtDef : Specifier ExtDecList SEMI
-  | Specifier SEMI
-  | Specifier FunDec CompSt
+ExtDef : Specifier ExtDecList SEMI { $$ = createNewNodeNot("ExtDef", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Specifier SEMI { $$ = createNewNodeNot("ExtDef", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | Specifier FunDec CompSt { $$ = createNewNodeNot("ExtDef", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
-ExtDecList : VarDec
-  | VarDec COMMA ExtDecList
+ExtDecList : VarDec { $$ = createNewNodeNot("ExtDecList", @$.first_line); insertNode($$, $1); }
+  | VarDec COMMA ExtDecList { $$ = createNewNodeNot("ExtDecList", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
 
 /* Specifiers */
-Specifier : TYPE
-  | StructSpecifier
+Specifier : TYPE { $$ = createNewNodeNot("Specifier", @$.first_line); insertNode($$, $1); }
+  | StructSpecifier { $$ = createNewNodeNot("Specifier", @$.first_line); insertNode($$, $1); }
   ;
-StructSpecifier : STRUCT OptTag LC DefList RC
-  | STRUCT OptTag LC error RC
-  | STRUCT Tag
+StructSpecifier : STRUCT OptTag LC DefList RC { $$ = createNewNodeNot("StructSpecifier", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); insertNode($$, $5); }
+  | STRUCT Tag { $$ = createNewNodeNot("StructSpecifier", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
   ;
-OptTag : ID
-  | /* empty */ {$$=NULL;}
+OptTag : ID { $$ = createNewNodeNot("OptTag", @$.first_line); insertNode($$, $1); }
+  | /* empty */ { $$ = NULL; }
   ;
-Tag : ID
+Tag : ID { $$ = createNewNodeNot("Tag", @$.first_line); insertNode($$, $1); }
   ;
 
 /* Declarators */
-VarDec : ID
-  | VarDec LB INT RB
-  | VarDec LB error RB
+VarDec : ID { $$ = createNewNodeNot("VarDec", @$.first_line); insertNode($$, $1); }
+  | VarDec LB INT RB { $$ = createNewNodeNot("VarDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); }
+  | VarDec LB error RB { $$ = NULL; }
   ;
-FunDec : ID LP VarList RP
-  | ID LP RP
-  | error RP {$$=NULL;}
+FunDec : ID LP VarList RP { $$ = createNewNodeNot("FunDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); }
+  | ID LP RP { $$ = createNewNodeNot("FunDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | error RP { $$ = NULL; }
   ;
-VarList : ParamDec COMMA VarList
-  | ParamDec
+VarList : ParamDec COMMA VarList { $$ = createNewNodeNot("VarList", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | ParamDec { $$ = createNewNodeNot("VarList", @$.first_line); insertNode($$, $1); }
   ;
-ParamDec : Specifier VarDec
+  
+ParamDec : Specifier VarDec { $$ = createNewNodeNot("ParamDec", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
   ;
 
 /* Statements */
-CompSt : LC DefList StmtList RC
-  | error RC {$$=NULL;}
+CompSt : LC DefList StmtList RC { $$ = createNewNodeNot("CompSt", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); }
+  | error RC { $$ = NULL; }
   ;
-StmtList : Stmt StmtList
-  | /* empty */ {$$=NULL;}
+StmtList : Stmt StmtList { $$ = createNewNodeNot("StmtList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | /* empty */ { $$ = NULL; }
   ;
-Stmt : Exp SEMI
-  | CompSt
-  | RETURN Exp SEMI
-  | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE
-  | IF LP Exp RP Stmt ELSE Stmt
-  | WHILE LP Exp RP Stmt
-  | error SEMI {$$=NULL;}
+Stmt : Exp SEMI { $$ = createNewNodeNot("Stmt", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | CompSt { $$ = createNewNodeNot("Stmt", @$.first_line); insertNode($$, $1); }
+  | RETURN Exp SEMI { $$ = createNewNodeNot("Stmt", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | IF LP Exp RP Stmt { $$ = createNewNodeNot("Stmt", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); insertNode($$, $5); }
+  | IF LP Exp RP Stmt ELSE Stmt { $$ = createNewNodeNot("Stmt", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); insertNode($$, $5); insertNode($$, $6); insertNode($$, $7); }
+  | WHILE LP Exp RP Stmt { $$ = createNewNodeNot("Stmt", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); insertNode($$, $5); }
+  | error SEMI { $$ = NULL; }
   ;
 
 /* Local Definintions */
-DefList : Def DefList
-  | /* empty */ {$$=NULL;}
+DefList : Def DefList { $$ = createNewNodeNot("DefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | /* empty */ { $$ = NULL; }
   ;
-Def : Specifier DecList SEMI
+Def : Specifier DecList SEMI { $$ = createNewNodeNot("Def", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
-DecList : Dec
-  | Dec COMMA DecList
+DecList : Dec { $$ = createNewNodeNot("DecList", @$.first_line); insertNode($$, $1); }
+  | Dec COMMA DecList { $$ = createNewNodeNot("DecList", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
-Dec : VarDec
-  | VarDec ASSIGNOP Exp
+Dec : VarDec { $$ = createNewNodeNot("Dec", @$.first_line); insertNode($$, $1); }
+  | VarDec ASSIGNOP Exp { $$ = createNewNodeNot("Dec", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
 
 /* Expressions */
-Exp : Exp ASSIGNOP Exp
-  | Exp AND Exp
-  | Exp OR Exp
-  | Exp RELOP Exp
-  | Exp PLUS Exp
-  | Exp MINUS Exp
-  | Exp STAR Exp
-  | Exp DIV Exp
-  | LP Exp RP
-  | MINUS Exp %prec UMINUS
-  | NOT Exp
-  | ID LP Args RP
-  | ID LP RP
-  | Exp LB Exp RB
-  | Exp DOT ID
-  | ID
-  | INT
-  | FLOAT
-  | LP error RP
-  | LB error RB
+Exp : Exp ASSIGNOP Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp AND Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp OR Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp RELOP Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp PLUS Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp MINUS Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp STAR Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp DIV Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | LP Exp RP { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | MINUS Exp %prec UMINUS { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | NOT Exp { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | ID LP Args RP { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); }
+  | ID LP RP { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp LB Exp RB { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); insertNode($$, $4); }
+  | Exp DOT ID { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | ID { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); }
+  | INT { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); }
+  | FLOAT { $$ = createNewNodeNot("Exp", @$.first_line); insertNode($$, $1); }
+  | LP error RP { $$ = NULL; }
+  | LB error RB { $$ = NULL; }
   ;
-Args : Exp COMMA Args
-  | Exp
+Args : Exp COMMA Args { $$ = createNewNodeNot("Args", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  | Exp { $$ =createNewNodeNot("Args", @$.first_line); insertNode($$, $1); }
   ;
 
 

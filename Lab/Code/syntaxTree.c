@@ -92,7 +92,7 @@ void printTree(TreeNode *root, int layer) {
 	    printf("%s\n", root->name);
 	}break;
 	case VALEND:{
-	    printf("%s: %s", root->name, root->val);
+	    printf("%s: %s\n", root->name, root->val);
 	}break;
 	default:{
 	    printf("Unexpected error in printTree()");
