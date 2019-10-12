@@ -24,6 +24,6 @@ TreeNode *createNewNodeNot(char* name, int lineno); // for type=NOTEND
 TreeNode *createNewNodeID(char* name);  // for type=IDEND
 TreeNode *createNewNodeVal(char* name, char* val); // for type=VALEND
 void insertNode(TreeNode *parent, TreeNode *child);
-void printTree(TreeNode *root);
+void printTree(TreeNode *root, int layer);
 
 #endif

@@ -77,6 +77,32 @@ void insertNode(TreeNode *parent, TreeNode *child) {
 */
 }
 
-void printTree(TreeNode *root) {
-    //TODO
+void printTree(TreeNode *root, int layer) {
+    if(!root)	return;
+
+    for(int i=0;i<layer;i++){
+	printf("  ");
+    }
+
+    switch (root->type) {
+	case NOTEND:{
+	    printf("%s (%d)\n", root->name, root->lineno);
+	}break;
+	case IDEND:{
+	    printf("%s\n", root->name);
+	}break;
+	case VALEND:{
+	    printf("%s: %s", root->name, root->val);
+	}break;
+	default:{
+	    printf("Unexpected error in printTree()");
+	    exit(-1);
+	}
+    }
+
+    TreeNode *temp = root->children;
+    while(temp){
+	printTree(temp, layer+1);
+	temp = temp->next;
+    }
 }
