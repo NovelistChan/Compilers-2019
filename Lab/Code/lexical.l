@@ -51,7 +51,7 @@ LC \{
 RC \}
 %%
 {BADHEX} {
-  printf("Error type A:BADHEX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  printf("Error type A at Line %d: Illegal hexadecimal number \'%s\'.\n", yylineno, yytext);
   
   is_pass = false;
   yylval.type_node = NULL;
@@ -59,7 +59,7 @@ RC \}
 }
 
 {BADOCT} {
-  printf("Error type A:BADOCT at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  printf("Error type A at Line %d: Illegal octal number \'%s\'.\n", yylineno, yytext);
   
   is_pass = false;
   yylval.type_node = NULL;
@@ -67,7 +67,7 @@ RC \}
 }
 
 {BADPREFIX} {
-  printf("Error type A:BADPREFIX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  printf("Error type A at Line %d: Mysterious characters \"%s\".\n", yylineno, yytext);
   
   is_pass = false;
   yylval.type_node = NULL;
@@ -214,7 +214,7 @@ RC \}
 }
 
 . {
-  printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  printf("Error type A at Line %d: Mysterious characters \"%s\".\n", yylineno, yytext);
   
   is_pass = false;
 }
