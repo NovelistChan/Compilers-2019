@@ -1,6 +1,16 @@
 %{
+  #include <stdbool.h>
   #include "syntax.tab.h"
   #include "syntaxTree.h"
+
+  bool is_pass = true; // check error
+
+  int yycolumn = 1;
+  #define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; \
+    yylloc.last_column = yycolumn + yyleng - 1; \
+    yycolumn += yyleng;
 %}
 
 %option yylineno
@@ -18,7 +28,8 @@ RETURN return
 IF if
 ELSE else
 WHILE while
-SPACE " "|\t|\n|\r
+SPACE [ \f\t\r\v]+
+LINE \n
 ID [_a-zA-Z][_a-zA-Z0-9]*
 SEMI ;
 COMMA ,
@@ -39,11 +50,29 @@ RB \]
 LC \{
 RC \}
 %%
-{BADHEX} { printf("Error type A:BADHEX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+{BADHEX} {
+  printf("Error type A:BADHEX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  
+  is_pass = false;
+  yylval.type_node = NULL;
+  return INT;
+}
 
-{BADOCT} { printf("Error type A:BADOCT at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+{BADOCT} {
+  printf("Error type A:BADOCT at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  
+  is_pass = false;
+  yylval.type_node = NULL;
+  return INT;
+}
 
-{BADPREFIX} { printf("Error type A:BADPREFIX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+{BADPREFIX} {
+  printf("Error type A:BADPREFIX at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  
+  is_pass = false;
+  yylval.type_node = NULL;
+  return ID;
+}
 
 {INT} {
   yylval.type_node = createNewNodeVal("INT", yytext);
@@ -86,6 +115,8 @@ RC \}
 }
 
 {SPACE} {}
+
+{LINE} { yycolumn = 1; }
 
 {ID} {
   yylval.type_node = createNewNodeVal("ID", yytext);
@@ -182,6 +213,10 @@ RC \}
   return RC;
 }
 
-. { printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+. {
+  printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);
+  
+  is_pass = false;
+}
 %%
 

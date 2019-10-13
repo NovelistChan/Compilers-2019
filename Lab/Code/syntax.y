@@ -1,10 +1,13 @@
 %{
 #include <stdio.h>
+#include <stdbool.h>
 #include "syntaxTree.h"
 #include "lex.yy.c"
 
-int yylex();
+extern void yyerror(char* msg);
+
 extern int yylineno;
+extern bool is_pass;
 TreeNode* root = NULL;
 %}
 
@@ -52,7 +55,7 @@ TreeNode* root = NULL;
 
 %%
 /* High-level Definitions  */
-Program : ExtDefList { $$ = createNewNodeNot("Program", @$.first_line); insertNode($$, $1); root = $$; printTree(root, 0);}
+Program : ExtDefList { $$ = createNewNodeNot("Program", @$.first_line); insertNode($$, $1); root = $$; if(is_pass) printTree(root, 0);}
   ;
 ExtDefList : ExtDef ExtDefList { $$ = createNewNodeNot("ExtDefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
   | /* empty */ { $$ = NULL; }
@@ -151,7 +154,8 @@ Args : Exp COMMA Args { $$ = createNewNodeNot("Args", @$.first_line); insertNode
 
 
 %%
-int yyerror(char* msg){
+void yyerror(char* msg){
 //  fprintf(stderr, "%s\n", msg);
-  return fprintf(stderr, "Error type B at Line %d: Unexpected token \"%s\".\n", yylineno, yytext);
+  is_pass = false;
+  fprintf(stderr, "Error type B at Line %d: Unexpected token \"%s\".\n", yylineno, yytext);
 }
