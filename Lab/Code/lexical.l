@@ -14,9 +14,10 @@
 %}
 
 %option yylineno
-BADHEX (0x|0X)(([0-9]*[g-zG-Z][0-9]*)*)
+BADPOSTFIX (0x|0X)(([0-9]*[g-zG-Z][0-9]*)*)
 BADOCT 0((0|8|9)+)
 BADPREFIX 0[a-wA-Wy-zY-Z]([0-9]*[a-zA-Z]*[0-9]*)*
+BADHEX {BADPREFIX}|{BADPOSTFIX}
 DEC 0|[1-9][0-9]*
 OCT 0(0|[1-7][0-7]*)
 HEX (0x|0X)(0|[1-9a-fA-F][0-9a-fA-F]*)
@@ -63,14 +64,6 @@ RC \}
   is_pass = false;
   yylval.type_node = NULL;
   return INT;
-}
-
-{BADPREFIX} {
-  printf("Error type A at Line %d: Mysterious characters \"%s\".\n", yylineno, yytext);
-  
-  is_pass = false;
-  yylval.type_node = NULL;
-  return ID;
 }
 
 {DEC} {
