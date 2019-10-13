@@ -14,7 +14,13 @@ typedef struct treeNode{
 
     NODE_TYPE type; //TYPE
 
-    char val[32]; //VALUE
+    // char val[32]; //VALUE
+    union{
+        int val_int;
+        float val_float;
+        char val_str[32];
+    } attr;
+
     char name[32]; //NAME
 
     struct treeNode *next; //WHEN REFERRED AS A CHILD, THIS REPRESENTS ITS SIBLING

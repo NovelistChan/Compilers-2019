@@ -20,8 +20,7 @@ BADPREFIX 0[a-wA-Wy-zY-Z]([0-9]*[a-zA-Z]*[0-9]*)*
 DEC 0|[1-9][0-9]*
 OCT 0(0|[1-7][0-7]*)
 HEX (0x|0X)(0|[1-9a-fA-F][0-9a-fA-F]*)
-INT {DEC}|{OCT}|{HEX}
-FLOAT {INT}\.[0-9]+
+FLOAT {DEC}\.[0-9]+
 TYPE int|float
 STRUCT struct
 RETURN return
@@ -74,8 +73,18 @@ RC \}
   return ID;
 }
 
-{INT} {
-  yylval.type_node = createNewNodeVal("INT", yytext);
+{DEC} {
+  yylval.type_node = createNewNodeVal("DEC", yytext);
+  return INT;
+}
+
+{HEX} {
+  yylval.type_node = createNewNodeVal("HEX", yytext);
+  return INT;
+}
+
+{OCT} {
+  yylval.type_node = createNewNodeVal("OCT", yytext);
   return INT;
 }
 

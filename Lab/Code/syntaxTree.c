@@ -45,9 +45,30 @@ TreeNode *createNewNodeVal(char* name, char* val){ // for type=VALEND
     newNode->type = VALEND;
     newNode->children = NULL;
     newNode->lineno = 0;
-    strcpy(newNode->name, name);
-    strcpy(newNode->val, val);
     newNode->next = NULL;
+
+    //strcpy(newNode->name, name);
+    //strcpy(newNode->val, val);
+    if(!strcmp(name, "DEC")){
+        strcpy(newNode->name, "INT");
+        newNode->attr.val_int = atoi(val);
+    }
+    else if(!strcmp(name, "HEX")){
+        strcpy(newNode->name, "INT");
+        newNode->attr.val_int = (int)strtol(val, NULL, 16);
+    }
+    else if(!strcmp(name, "OCT")){
+        strcpy(newNode->name, "INT");
+        newNode->attr.val_int = (int)strtol(val, NULL, 8);
+    }
+    else if(!strcmp(name, "FLOAT")){
+        strcpy(newNode->name, "FLOAT");
+        newNode->attr.val_float = atof(val);
+    }
+    else{
+        strcpy(newNode->name, name);
+        strcpy(newNode->attr.val_str, val);
+    }
 
     return newNode;
 }
@@ -92,7 +113,14 @@ void printTree(TreeNode *root, int layer) {
 	    printf("%s\n", root->name);
 	}break;
 	case VALEND:{
-	    printf("%s: %s\n", root->name, root->val);
+        printf("%s: ", root->name);
+        if(!strcmp(root->name, "INT"))
+	        printf("%d\n", root->attr.val_int);
+        else if(!strcmp(root->name, "FLOAT"))
+            printf("%f\n", root->attr.val_float);
+        else
+            printf("%s\n", root->attr.val_str);
+        
 	}break;
 	default:{
 	    printf("Unexpected error in printTree()");
