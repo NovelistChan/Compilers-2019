@@ -10,7 +10,7 @@ typedef struct FieldList_ *FieldList;
 typedef struct Func_ *Func;
 // Node组成List List组成Table
 typedef struct HashNode_ *HashNode;
-typedef struct HashList_ *HashList;
+typedef struct TableNode_ *TableNode;
 typedef enum {
     TRUE, FALSE
 } Bool;
@@ -62,7 +62,7 @@ struct HashNode_ {
     // bool ifTaken; // 该节点是否已被占用
 };
 
-struct HashList_ {
+struct TableNode_ {
     int nodeNum; // 当前负载节点数量
     HashNode *hashList; // 开散列链表
 };
@@ -70,4 +70,6 @@ struct HashList_ {
 unsigned int hash_pjw(char *name);
 void createHashTable();
 HashNode createHashNode(char *name, NodeType kind);
+HashNode hashCheck(HashNode checkNode);
+void insertNode(HashNode newNode);
 #endif
