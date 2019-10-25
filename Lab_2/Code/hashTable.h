@@ -8,15 +8,23 @@
 typedef struct Type_ *Type;
 typedef struct FieldList_ *FieldList;
 typedef struct Func_ *Func;
+// Node组成List List组成Table
 typedef struct HashNode_ *HashNode;
-typedef struct HashTable_ *HashTable;
+typedef struct HashList_ *HashList;
+typedef enum {
+    TRUE, FALSE
+} Bool;
+
+typedef enum {
+    BASIC, ARRAY, STRUCTURE
+} TypeKind;
+
+typedef enum {
+    FUNC, TYPE
+} NodeType;
 
 struct Type_ {
-    enum {
-        BASIC,
-        ARRAY,
-        STRUCTURE
-    } kind; // 变量类型
+    TypeKind kind; // 变量类型
     union {
         // 基本类型 int = 0, float = 1
         int basic;
@@ -38,16 +46,13 @@ struct Func_ {
     int paramNum; // 参数个数
     Type ret; // 返回值类型
     FieldList paramList; // 参数列表
-    bool ifDef; // 是否已被声明
-    bool ifReal; // 是否已被实现
+    Bool ifDef; // 是否已被声明
+    Bool ifReal; // 是否已被实现
 };
 
 struct HashNode_ {
     char *name; // 节点名
-    enum {
-        FUNC,
-        TYPE
-    } kind; // 区分是变量类型还是函数类型
+    NodeType kind; // 区分是变量类型还是函数类型
     union {
         Type type;
         Func func;
@@ -57,10 +62,12 @@ struct HashNode_ {
     // bool ifTaken; // 该节点是否已被占用
 };
 
-struct HashTable_ {
+struct HashList_ {
     int nodeNum; // 当前负载节点数量
     HashNode *hashList; // 开散列链表
 };
 
 unsigned int hash_pjw(char *name);
+void createHashTable();
+HashNode createHashNode(char *name, NodeType kind);
 #endif
