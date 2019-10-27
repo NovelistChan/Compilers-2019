@@ -19,7 +19,7 @@ void createHashTable() {
     hashTable = (TableNode *)malloc(sizeof(TableNode) * TABLE_SIZE);
     int i = 0;
     for (; i < TABLE_SIZE; i++) {
-        hashTable[i]->nodeNum = 0;
+//        hashTable[i]->nodeNum = 0;
         hashTable[i]->hashList = NULL;
     }
 }
@@ -38,10 +38,11 @@ HashNode hashCheck(HashNode checkNode) {
 
 void insertNode(HashNode newNode) {
     int index = hash_pjw(newNode->name);
+    /*
     if (hashTable[index]->nodeNum == 0) {
         hashTable[index]->nodeNum++;
         hashTable[index]->hashList = (HashNode)malloc(sizeof(HashNode) * hashTable[index]->nodeNum);
-        hashTable[index]->hashList[0] = newNode;
+        hashTable[index]->hashList = newNode;
     } else {
         hashTable[index]->nodeNum++;
         HashNode *hashList = (HashNode *)malloc(sizeof(HashNode) * hashTable[index]->nodeNum);
@@ -52,4 +53,15 @@ void insertNode(HashNode newNode) {
         hashList[i] = newNode;
         hashTable[index]->hashList = hashList;
     }
+    */
+   HashNode p = hashTable[index]->hashList;
+   if (!p){
+       p = newNode;
+   } else{
+       while(!p->next){
+           p = p->next;
+       }
+       p->next = newNode;
+       newNode->next = NULL;
+   }
 }

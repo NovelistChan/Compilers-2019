@@ -5,12 +5,12 @@
 #include "stdlib.h"
 #include "string.h"
 
-typedef struct Type_ *Type;
-typedef struct FieldList_ *FieldList;
-typedef struct Func_ *Func;
+typedef struct Type_* Type;
+typedef struct FieldList_* FieldList;
+typedef struct Func_* Func;
 // Node组成List List组成Table
-typedef struct HashNode_ *HashNode;
-typedef struct TableNode_ *TableNode;
+typedef struct HashNode_* HashNode;
+typedef struct TableNode_* TableNode;
 typedef enum {
     TRUE, FALSE
 } Bool;
@@ -63,8 +63,8 @@ struct HashNode_ {
 };
 
 struct TableNode_ {
-    int nodeNum; // 当前负载节点数量
-    HashNode *hashList; // 开散列链表
+//    int nodeNum; // 当前负载节点数量
+    HashNode hashList; // 开散列链表
 };
 
 unsigned int hash_pjw(char *name);
