@@ -48,7 +48,7 @@ HashNode hashCheck(HashNode checkNode) {
     return NULL;
 }
 
-void insertNode(HashNode newNode) {
+void insertHashNode(HashNode newNode) {
     int index = hash_pjw(newNode->name);
     /*
     if (hashTable[index]->nodeNum == 0) {
@@ -80,7 +80,7 @@ void insertNode(HashNode newNode) {
 
 int fieldCmp(FieldList f1, FieldList f2) {
     if (f1 == NULL && f2 == NULL) {
-        return 0
+        return 0;
     } else if (f1 == NULL && f2 != NULL) {
         return 1;
     } else if (f1 != NULL && f2 == NULL) {

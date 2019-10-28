@@ -3,6 +3,8 @@
 
 extern void yyrestart();
 extern int yyparse();
+extern void createHashTable();
+extern void semanticAnalysis();
 extern bool is_pass;
 
 int main(int argc, char** argv){
@@ -19,6 +21,8 @@ int main(int argc, char** argv){
 
   if(is_pass){
     // TODO initHashTable, semantic analysis
+    createHashTable();
+    semanticAnalysis();
   }
   return 0;
 }

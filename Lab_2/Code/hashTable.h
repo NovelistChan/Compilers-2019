@@ -71,7 +71,7 @@ unsigned int hash_pjw(char *name);
 void createHashTable();
 HashNode createHashNode(char *name, NodeType kind);
 HashNode hashCheck(HashNode checkNode);
-void insertNode(HashNode newNode);
+void insertHashtNode(HashNode newNode);
 int structCmp(Type s1, Type s2);
 
 #endif
