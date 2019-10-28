@@ -1,6 +1,6 @@
 #include "hashTable.h"
 #include <stdio.h>
-
+#include <string.h>
 #define TABLE_SIZE 100
 
 // HashList hashTable[TABLE_SIZE];
@@ -33,7 +33,19 @@ HashNode createHashNode(char *name, NodeType kind) {
 }
 
 HashNode hashCheck(HashNode checkNode) {
-
+    int index = hash_pjw(checkNode->name);
+    if (hashTable[index]->hashList == NULL) {
+        return NULL;
+    } else {
+        HashNode p = hashTable[index]->hashList;
+        while (!p) {
+            if (strcmp(p->name, checkNode->name) == 0) {
+                return p;
+            }
+            p = p->next;
+        }
+    }
+    return NULL;
 }
 
 void insertNode(HashNode newNode) {
@@ -56,10 +68,10 @@ void insertNode(HashNode newNode) {
     */
    newNode->next = NULL;
    HashNode p = hashTable[index]->hashList;
-   if (!p){
+   if (!p) {
        p = newNode;
-   } else{
-       while(!p->next){
+   } else {
+       while (!p->next) {
            p = p->next;
        }
        p->next = newNode;
