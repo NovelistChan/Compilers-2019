@@ -13,16 +13,16 @@ void semanticAnalysis();    // entrance of semantic analysis
 void Program(TreeNode *node);
 void ExtDefList(TreeNode *node);
 void ExtDef(TreeNode *node);
-void ExtDecList(TreeNode *node);
-void FunDeclaration(TreeNode *node);
+void ExtDecList(TreeNode *node, Type type);
+// void FunDeclaration(TreeNode *node);
 
-void Specifier(TreeNode *node);
-void StructSpecifier(TreeNode *node);
+Type Specifier(TreeNode *node);
+Type StructSpecifier(TreeNode *node, Type type);
 void OptTag(TreeNode *node);
 void Tag(TreeNode *node);
 
-void VarDec(TreeNode *node);
-void FunDec(TreeNode *node);
+HashNode VarDec(TreeNode *node);
+Func FunDec(TreeNode *node);
 void VarList(TreeNode *node);
 void ParamDec(TreeNode *node);
 
@@ -35,7 +35,7 @@ void Def(TreeNode *node);
 void DecList(TreeNode *node);
 void Dec(TreeNode *node);
 
-void Exp(TreeNode *node);
+Type Exp(TreeNode *node);
 void Args(TreeNode *node);
 
 #endif

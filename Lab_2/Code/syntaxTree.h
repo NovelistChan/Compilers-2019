@@ -7,7 +7,7 @@ typedef enum {
   VALEND   // terminal with value
 } NODE_TYPE;
 
-typedef struct treeNode{
+typedef struct treeNode {
     struct treeNode *children;//CHILD NODES
 //    int childNum; //NUMBER OF CHILDREN
     int lineno; //LOCATION
@@ -15,7 +15,7 @@ typedef struct treeNode{
     NODE_TYPE type; //TYPE
 
     // char val[32]; //VALUE
-    union{
+    union {
         int val_int;
         float val_float;
         char val_str[32];
