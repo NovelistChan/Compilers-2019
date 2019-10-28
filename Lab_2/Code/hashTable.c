@@ -77,3 +77,29 @@ void insertNode(HashNode newNode) {
        p->next = newNode;
    }
 }
+
+int fieldCmp(FieldList f1, FieldList f2) {
+    if (f1 == NULL && f2 == NULL) {
+        return 0
+    } else if (f1 == NULL && f2 != NULL) {
+        return 1;
+    } else if (f1 != NULL && f2 == NULL) {
+        return 1;
+    } else {
+        if (strcmp(f1->name, f2->name) == 0) {
+            return fieldCmp(f1->tail, f2->tail);
+        } else return 1;
+    }
+    return 0;
+}
+
+// 2 = 类型不匹配 1 = 不相等 0 = 相等 
+int structCmp(Type s1, Type s2) {
+    if (s1->kind != s2->kind) {
+        return 2;
+    } 
+    FieldList f1 = s1->u.structure;
+    FieldList f2 = s2->u.structure;
+    int res = fieldCmp(f1, f2);
+    return res;
+}

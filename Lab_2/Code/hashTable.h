@@ -20,7 +20,7 @@ typedef enum {
 } TypeKind;
 
 typedef enum {
-    FUNC, TYPE
+    FUNC, VARI
 } NodeType;
 
 struct Type_ {
@@ -72,4 +72,6 @@ void createHashTable();
 HashNode createHashNode(char *name, NodeType kind);
 HashNode hashCheck(HashNode checkNode);
 void insertNode(HashNode newNode);
+int structCmp(Type s1, Type s2);
+
 #endif
