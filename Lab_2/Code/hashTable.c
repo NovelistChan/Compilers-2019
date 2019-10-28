@@ -54,6 +54,7 @@ void insertNode(HashNode newNode) {
         hashTable[index]->hashList = hashList;
     }
     */
+   newNode->next = NULL;
    HashNode p = hashTable[index]->hashList;
    if (!p){
        p = newNode;
@@ -62,6 +63,5 @@ void insertNode(HashNode newNode) {
            p = p->next;
        }
        p->next = newNode;
-       newNode->next = NULL;
    }
 }

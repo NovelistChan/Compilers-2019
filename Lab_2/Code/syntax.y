@@ -32,7 +32,7 @@ TreeNode* root = NULL;
 %token <type_node> STRUCT RETURN IF ELSE WHILE
 
 /* declared non-terminals */
-%type <type_node> Program ExtDefList ExtDef ExtDecList
+%type <type_node> Program ExtDefList ExtDef ExtDecList FunDeclaration
 %type <type_node> Specifier StructSpecifier OptTag Tag
 %type <type_node> VarDec FunDec VarList ParamDec
 %type <type_node> CompSt StmtList Stmt
@@ -55,9 +55,10 @@ TreeNode* root = NULL;
 
 %%
 /* High-level Definitions  */
-Program : ExtDefList { $$ = createNewNodeNot("Program", @$.first_line); insertNode($$, $1); root = $$; if(is_pass) printTree(root, 0);}
+Program : ExtDefList { $$ = createNewNodeNot("Program", @$.first_line); insertNode($$, $1); root = $$; if(is_pass) printTree(root, 0);} 
   ;
 ExtDefList : ExtDef ExtDefList { $$ = createNewNodeNot("ExtDefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
+  | FunDeclaration ExtDefList { $$ = createNewNodeNot("ExtDefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
   | /* empty */ { $$ = NULL; }
   ;
 ExtDef : Specifier ExtDecList SEMI { $$ = createNewNodeNot("ExtDef", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
@@ -66,6 +67,8 @@ ExtDef : Specifier ExtDecList SEMI { $$ = createNewNodeNot("ExtDef", @$.first_li
   ;
 ExtDecList : VarDec { $$ = createNewNodeNot("ExtDecList", @$.first_line); insertNode($$, $1); }
   | VarDec COMMA ExtDecList { $$ = createNewNodeNot("ExtDecList", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
+  ;
+FunDeclaration : Specifier FunDec SEMI { $$ = createNewNodeNot("FunDeclaration", @$.first_line); insertNode($$, $1); insertNode($$, $2); insertNode($$, $3); }
   ;
 
 /* Specifiers */

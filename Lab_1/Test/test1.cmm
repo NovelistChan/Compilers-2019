@@ -2,10 +2,4 @@ int main()
 {
 	int i = 1;
 	int j = ~i;
-	int k = 0xff;
-	int p = 077;
-	int q = 0xgg;
-	int l = 099;
-	int id = 0g11;
-	int m = 008;
 }
