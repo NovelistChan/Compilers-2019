@@ -28,7 +28,7 @@ HashNode createHashNode(char *name, NodeType kind) {
     HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
     Info newInfo = (Info)malloc(sizeof(struct Info_));
     newNode->name = name;
-    newNode->kind = kind;
+    newNode->info = NULL;
     newNode->next = NULL;
     return newNode;
 }
@@ -103,4 +103,16 @@ int structCmp(Type s1, Type s2) {
     FieldList f2 = s2->u.structure;
     int res = fieldCmp(f1, f2);
     return res;
+}
+
+// 若有该类型则返回该info项
+Info checkInfo(HashNode checkNode, NodeType kind) {
+    Info p = checkNode->info;
+    while (p) {
+        if (p->kind == kind) {
+            return p;
+        }
+        p = p->next;
+    }
+    return NULL;
 }

@@ -45,11 +45,11 @@ struct FieldList_ {
 
 struct Func_ {
     char *name; // 函数名
-    int paramNum; // 参数个数
+   // int paramNum; // 参数个数
     Type ret; // 返回值类型
     FieldList paramList; // 参数列表
-    Bool ifDef; // 是否已被声明
-    Bool ifReal; // 是否已被实现
+   // Bool ifDef; // 是否已被声明
+   // Bool ifReal; // 是否已被实现
     Func next; // 用以指示是否有重名类型
 };
 
@@ -80,5 +80,7 @@ HashNode createHashNode(char *name, NodeType kind);
 HashNode hashCheck(char* name);
 void insertHashtNode(HashNode newNode);
 int structCmp(Type s1, Type s2);
+Info checkInfo(HashNode checkNode, NodeType kind);
+
 
 #endif

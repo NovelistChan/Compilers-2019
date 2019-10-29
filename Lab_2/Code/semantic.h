@@ -36,7 +36,9 @@ void Def(TreeNode *node, bool isStruct, FieldList fieldList);
 void DecList(TreeNode *node, bool isStruct, FieldList fieldList, Type type);
 void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type);
 
-void Exp(TreeNode *node);
-void Args(TreeNode *node);
+Type Exp(TreeNode *node);
+FieldList Args(TreeNode *node);
+
+int checkArgs(FieldList paramList1, FieldList paramList2);
 
 #endif
