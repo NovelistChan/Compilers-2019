@@ -40,12 +40,11 @@ Type Specifier(TreeNode *node) {
     Type type = NULL;
     if (strcmp(child->name, "TYPE") == 0) {
         type = (Type)malloc(sizeof(struct Type_));
-        type->next = NULL;
         type->kind = BASIC;
         if (strcmp(child->attr.val_str, "int") == 0) {
             type->u.basic = 0;
         } else type->u.basic = 1;
-    } else if (strcmp(child->name, "StructSpecifier") == 0) {
+    } else {
         type = StructSpecifier(child);
     }
     return type;
@@ -54,32 +53,42 @@ Type Specifier(TreeNode *node) {
 Type StructSpecifier(TreeNode *node) {
     TreeNode *child = node->children->next; // skip STRUCT
     if(!strcmp(child->name, "OptTag")){ /* ******* defined ******* */
-        HashNode hashNode = createHashNode(OptTag(child), VARI);
+        // HashNode hashNode = createHashNode(OptTag(child), VARI);
+        char* hashName = OptTag(child);
 
         child = child->next->next; // skip LC("{")
         Type type = (Type)malloc(sizeof(struct Type_));
-        type->next = NULL;
         type->kind = STRUCTURE;
         type->u.structure = NULL;
         DefList(child, true, type->u.structure);
-        hashNode->info->type = type;
         // skip RC("}")
-        if(strcmp(hashNode->name, "")){
-            HashNode temp = hashCheck(hashNode->name);
+        if(strcmp(hashName, "")){
+            Info info = (Info)malloc(sizeof(struct Info_));
+            info->kind = VARI;
+            info->type = type;
+            info->next = NULL;
+            HashNode temp = hashCheck(hashName);
             if(temp){
-                temp->type->next = type;
-                printf("Error type 16 at Line %d: Duplicated name \"%s\"", node->lineno, hashNode->name);
-                return type;
+                temp->info->next = info;
+                printf("Error type 16 at Line %d: Duplicated name \"%s\"", node->lineno, hashName);
+            }else{
+                HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
+                hashNode->name = hashName;
+                hashNode->info = info;
+                insertHashtNode(hashNode);
             }
         }
-        insertHashtNode(hashNode);
         return type;
-    }else{
+    }else{  /* ******* use ******* */
         char* sname = OptTag(child);
         HashNode hashNode = hashCheck(sname);
-        if(hashNode && hashNode->kind==VARI && hashNode->type->kind==STRUCTURE){
-            return hashNode->type;
+        if(hashNode && hashNode->info->kind==VARI && hashNode->info->type->kind==STRUCTURE){
+            return hashNode->info->type;
         }else{
+            Type type = (Type)malloc(sizeof(struct Type_));
+            type->kind = STRUCTURE;
+            type->u.structure = NULL;
+            return type;
             printf("Error type 17 at Line %d: Undefined structure \"%s\"", node->lineno, sname);
         }
     }
@@ -131,12 +140,12 @@ void DecList(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
 
 void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
     TreeNode *child = node->children;
-    FieldList newFieldList = (FieldList)malloc(sizeof(struct FieldList_));
-    newFieldList->tail=NULL;
     Type newType = (Type)malloc(sizeof(struct Type_));
     memcpy(newType, type, sizeof(struct Type_));
-    strcpy(newFieldList->name, VarDec(child, newType));
+    FieldList newFieldList = (FieldList)malloc(sizeof(struct FieldList_));
+    newFieldList->name = VarDec(child, newType);
     newFieldList->type = newType;
+    newFieldList->tail = NULL;
     /* add newFieldList to the tail of fieldList and check the duplication of name in structure,
     then check the duplication of name in hashTable
     */
@@ -174,13 +183,11 @@ Type Exp (TreeNode* node) {
     } else if (!strcmp(child->name, "INT") && child->next == NULL) {
         type = (Type)malloc(sizeof(struct Type_));
         type->kind = BASIC;
-        type->next = NULL;
         type->u.basic = 0;
         return type;
     } else if (!strcmp(child->name, "FLOAT") && child->next == NULL) {
         type = (Type)malloc(sizeof(struct Type_));
         type->kind = BASIC;
-        type->next = NULL;
         type->u.basic = 1;
         return type;
     } 

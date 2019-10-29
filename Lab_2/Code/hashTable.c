@@ -28,7 +28,8 @@ HashNode createHashNode(char *name, NodeType kind) {
     HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
     Info newInfo = (Info)malloc(sizeof(struct Info_));
     newNode->name = name;
-    newNode->info = NULL;
+    newInfo->kind = kind;
+    newInfo->next = NULL;
     newNode->next = NULL;
     return newNode;
 }

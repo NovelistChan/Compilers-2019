@@ -34,7 +34,6 @@ struct Type_ {
         // 结构体类型信息是一个链表
         FieldList structure;
     } u;
-    Type next; // 用以指示是否有重名类型
 };
 
 struct FieldList_ {
@@ -45,12 +44,11 @@ struct FieldList_ {
 
 struct Func_ {
     char *name; // 函数名
-   // int paramNum; // 参数个数
+    int paramNum; // 参数个数
     Type ret; // 返回值类型
     FieldList paramList; // 参数列表
-   // Bool ifDef; // 是否已被声明
-   // Bool ifReal; // 是否已被实现
-    Func next; // 用以指示是否有重名类型
+    Bool ifDef; // 是否已被声明
+    Bool ifReal; // 是否已被实现
 };
 
 struct Info_{
