@@ -40,6 +40,7 @@ Type Specifier(TreeNode *node) {
     Type type = NULL;
     if (strcmp(child->name, "TYPE") == 0) {
         type = (Type)malloc(sizeof(struct Type_));
+        type->next = NULL;
         type->kind = BASIC;
         if (strcmp(child->attr.val_str, "int") == 0) {
             type->u.basic = 0;
@@ -53,25 +54,26 @@ Type Specifier(TreeNode *node) {
 Type StructSpecifier(TreeNode *node) {
     TreeNode *child = node->children->next; // skip STRUCT
     if(!strcmp(child->name, "OptTag")){ /* ******* defined ******* */
-        HashNode hashNode = NULL;
-        hashNode = (HashNode)malloc(sizeof(struct HashNode_));
-
-        hashNode->kind = VARI;
-        strcpy(hashNode->name, OptTag(child));
+        HashNode hashNode = createHashNode(OptTag(child), VARI);
 
         child = child->next->next; // skip LC("{")
         Type type = (Type)malloc(sizeof(struct Type_));
+        type->next = NULL;
         type->kind = STRUCTURE;
         type->u.structure = NULL;
         DefList(child, true, type->u.structure);
-        hashNode->type = type;
+        hashNode->info->type = type;
         // skip RC("}")
-        if(strcmp(hashNode->name, "")&&hashCheck(hashNode->name)){
-            printf("Error type 16 at Line %d: Duplicated name \"%s\"", node->lineno, hashNode->name);
-        }else{
-            insertHashtNode(hashNode);
-            return type;
+        if(strcmp(hashNode->name, "")){
+            HashNode temp = hashCheck(hashNode->name);
+            if(temp){
+                temp->type->next = type;
+                printf("Error type 16 at Line %d: Duplicated name \"%s\"", node->lineno, hashNode->name);
+                return type;
+            }
         }
+        insertHashtNode(hashNode);
+        return type;
     }else{
         char* sname = OptTag(child);
         HashNode hashNode = hashCheck(sname);

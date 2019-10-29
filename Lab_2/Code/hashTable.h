@@ -8,6 +8,7 @@
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 typedef struct Func_* Func;
+typedef struct Info_* Info;
 // Node组成List List组成Table
 typedef struct HashNode_* HashNode;
 typedef struct TableNode_* TableNode;
@@ -52,16 +53,20 @@ struct Func_ {
     Func next; // 用以指示是否有重名类型
 };
 
-struct HashNode_ {
-    char *name; // 节点名
+struct Info_{
     NodeType kind; // 区分是变量类型还是函数类型
     union {
         Type type;
         Func func;
-    }; // 节点内容
+    };
+    Info next;  // 用以指示是否有重名类型
+};
+
+struct HashNode_ {
+    char *name; // 节点名
+    Info info;
     // 开散列
     HashNode next;
-    // bool ifTaken; // 该节点是否已被占用
 };
 
 struct TableNode_ {

@@ -26,6 +26,7 @@ void createHashTable() {
 
 HashNode createHashNode(char *name, NodeType kind) {
     HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
+    Info newInfo = (Info)malloc(sizeof(struct Info_));
     newNode->name = name;
     newNode->kind = kind;
     newNode->next = NULL;
