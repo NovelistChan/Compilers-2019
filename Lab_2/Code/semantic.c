@@ -152,11 +152,36 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
 }
 
 FieldList Args(TreeNode* node) {
-
+    FieldList paramList = NULL;
+    TreeNode *child = node->children;
+    Type p = Exp(child);
+    if (p == NULL) {
+        return paramList;
+    }
+    paramList = (FieldList)malloc(sizeof(struct FieldList_));
+    paramList->name = NULL;
+    paramList->type = p;
+    paramList->tail = NULL;
+    if (child->next != NULL) {
+        paramList->tail = Args(child->next->next);
+    }
+    return paramList;
 }
 
+// 0 = 匹配 1 = 不匹配
 int checkArgs(FieldList paramList1, FieldList paramList2) {
-
+   FieldList p1 = paramList1;
+   FieldList p2 = paramList2;
+    while (p1 != NULL && p2 != NULL) {
+        if (p1->type != p2->type) {
+            return 1;
+        }
+        p1 = p1->tail; p2 = p2->tail;
+    }
+    if (p1 != NULL || p2 != NULL) {
+        return 1;
+    }
+    return 0;
 }
 
 Type Exp (TreeNode* node) {
