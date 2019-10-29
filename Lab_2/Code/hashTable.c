@@ -25,21 +25,21 @@ void createHashTable() {
 }
 
 HashNode createHashNode(char *name, NodeType kind) {
-    HashNode newNode = (HashNode)malloc(sizeof(HashNode));
+    HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
     newNode->name = name;
     newNode->kind = kind;
     newNode->next = NULL;
     return newNode;
 }
 
-HashNode hashCheck(HashNode checkNode) {
-    int index = hash_pjw(checkNode->name);
+HashNode hashCheck(char* name) {
+    int index = hash_pjw(name);
     if (hashTable[index]->hashList == NULL) {
         return NULL;
     } else {
         HashNode p = hashTable[index]->hashList;
         while (!p) {
-            if (strcmp(p->name, checkNode->name) == 0) {
+            if (strcmp(p->name, name) == 0) {
                 return p;
             }
             p = p->next;

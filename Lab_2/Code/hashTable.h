@@ -70,7 +70,7 @@ struct TableNode_ {
 unsigned int hash_pjw(char *name);
 void createHashTable();
 HashNode createHashNode(char *name, NodeType kind);
-HashNode hashCheck(HashNode checkNode);
+HashNode hashCheck(char* name);
 void insertHashtNode(HashNode newNode);
 int structCmp(Type s1, Type s2);
 
