@@ -70,7 +70,7 @@ Type StructSpecifier(TreeNode *node) {
             HashNode temp = hashCheck(hashName);
             if(temp){
                 temp->info->next = info;
-                printf("Error type 16 at Line %d: Duplicated name \"%s\"", node->lineno, hashName);
+                printf("Error type 16 at Line %d: Duplicated name \"%s\"", node->children->next->lineno, hashName);
             }else{
                 HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
                 hashNode->name = hashName;
@@ -89,7 +89,7 @@ Type StructSpecifier(TreeNode *node) {
             type->kind = STRUCTURE;
             type->u.structure = NULL;
             return type;
-            printf("Error type 17 at Line %d: Undefined structure \"%s\"", node->lineno, sname);
+            printf("Error type 17 at Line %d: Undefined structure \"%s\"", child->lineno, sname);
         }
     }
 }
@@ -142,13 +142,57 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
     TreeNode *child = node->children;
     Type newType = (Type)malloc(sizeof(struct Type_));
     memcpy(newType, type, sizeof(struct Type_));
-    FieldList newFieldList = (FieldList)malloc(sizeof(struct FieldList_));
-    newFieldList->name = VarDec(child, newType);
-    newFieldList->type = newType;
-    newFieldList->tail = NULL;
-    /* add newFieldList to the tail of fieldList and check the duplication of name in structure,
-    then check the duplication of name in hashTable
-    */
+    char* varName = VarDec(child, newType);
+
+    if(isStruct){
+        FieldList newFieldList = (FieldList)malloc(sizeof(struct FieldList_));
+        newFieldList->name = varName;
+        newFieldList->type = newType;
+        newFieldList->tail = NULL;
+        /* add newFieldList to the tail of fieldList and check the duplication of name in structure,
+        then check the duplication of name in hashTable
+        */
+        if(fieldList==NULL){
+            fieldList = newFieldList;
+        }else{
+            FieldList temp = fieldList;
+            bool isFirstError = true;
+            while(temp->tail){
+                if(isFirstError && !strcmp(temp->name, newFieldList->name)){
+                    isFirstError = false;
+                    printf("Error type 15 at Line %d: Redefined field \"%s\"", child->lineno, varName);
+                }
+                temp = temp->tail;
+            }
+            temp->tail = newFieldList;
+        }
+    }
+
+    HashNode temp = hashCheck(varName);
+    Info info = (Info)malloc(sizeof(struct Info_));
+    info->kind = VARI;
+    info->type = newType;
+    info->next = NULL;
+    if(temp){
+        temp->info->next = info;
+        printf("Error type 3 at Line %d: Redefined variable \"%s\"", child->lineno, varName);
+    }else{
+        HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
+        hashNode->name = varName;
+        hashNode->info = info;
+        insertHashtNode(hashNode);
+    }
+
+    child = child->next;
+    if(child){
+        if(isStruct){
+            printf("Error type 15 at Line %d: Field \"%s\" should not be initialized.", node->children->lineno, varName);
+        }
+        else{
+            // TODO check ASSIGNOP("=")
+            child = child->next;
+        }
+    }
 }
 
 FieldList Args(TreeNode* node) {
