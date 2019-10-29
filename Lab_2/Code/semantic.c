@@ -52,7 +52,7 @@ Type Specifier(TreeNode *node) {
 
 Type StructSpecifier(TreeNode *node) {
     TreeNode *child = node->children->next; // skip STRUCT
-    if(!strcmp(child->name, "OptTag")){ // defined
+    if(!strcmp(child->name, "OptTag")){ /* ******* defined ******* */
         HashNode hashNode = NULL;
         hashNode = (HashNode)malloc(sizeof(struct HashNode_));
 
@@ -62,7 +62,8 @@ Type StructSpecifier(TreeNode *node) {
         child = child->next->next; // skip LC("{")
         Type type = (Type)malloc(sizeof(struct Type_));
         type->kind = STRUCTURE;
-        DefList(child, type);
+        type->u.structure = NULL;
+        DefList(child, true, type->u.structure);
         hashNode->type = type;
         // skip RC("}")
         if(strcmp(hashNode->name, "")&&hashCheck(hashNode->name)){
@@ -94,6 +95,47 @@ char* Tag(TreeNode *node){
     return node->children->attr.val_str;
 }
 
-void DefList(TreeNode *node, Type type){
+char* VarDec(TreeNode *node, Type type){
 
+}
+
+void DefList(TreeNode *node, bool isStruct, FieldList fieldList){
+    TreeNode *child = node->children;
+    if(child){
+        Def(child, isStruct, fieldList);
+        child = child->next;
+        DefList(child, isStruct, fieldList);
+    }
+}
+
+void Def(TreeNode *node, bool isStruct, FieldList fieldList){  /* ******* defined ******* */
+    TreeNode *child = node->children;
+    Type type = Specifier(child);
+
+    child = child->next;
+    DecList(child, isStruct, fieldList, type);
+    // skip SEMI
+}
+
+void DecList(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
+    TreeNode *child = node->children;
+    Dec(child, isStruct, fieldList, type);
+    child = child->next;
+    if(child){
+        child = child->next;    // skip COMMA
+        DecList(child, isStruct, fieldList, type);
+    }
+}
+
+void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
+    TreeNode *child = node->children;
+    FieldList newFieldList = (FieldList)malloc(sizeof(struct FieldList_));
+    newFieldList->tail=NULL;
+    Type newType = (Type)malloc(sizeof(struct Type_));
+    memcpy(newType, type, sizeof(struct Type_));
+    strcpy(newFieldList->name, VarDec(child, newType));
+    newFieldList->type = newType;
+    /* add newFieldList to the tail of fieldList and check the duplication of name in structure,
+    then check the duplication of name in hashTable
+    */
 }
