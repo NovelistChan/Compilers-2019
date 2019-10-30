@@ -266,6 +266,7 @@ FieldList Args(TreeNode* node) {
     paramList->name = NULL;
     paramList->type = p;
     paramList->tail = NULL;
+    // Args -> Exp COMMA Args
     if (child->next != NULL) {
         paramList->tail = Args(child->next->next);
     }
