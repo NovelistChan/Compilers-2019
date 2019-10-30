@@ -36,6 +36,11 @@ Type Exp(TreeNode *node);
 FieldList Args(TreeNode *node);
 
 int checkArgs(FieldList paramList1, FieldList paramList2);
+// 赋值号
 Type AssignOp(Type left, Type right, int line);
+// 算术运算符
+Type ArithmeticCheck(Type left, Type right, int line);
+// 逻辑运算符
+Type LogicCheck(Type left, Type right, int line);
 
 #endif

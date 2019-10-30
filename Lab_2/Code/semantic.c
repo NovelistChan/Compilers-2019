@@ -379,13 +379,155 @@ Type Exp (TreeNode* node) {
             TreeNode *grandChild = child->children;
             // 赋值号左边只能是ID、Exp LB Exp RB、Exp DOT ID
             if (!((!strcmp(grandChild->name, "ID") && grandChild->next == NULL) 
-            || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "LB") && !strcmp(grandChild->next->next->name, "Exp") && !strcmp(grandChild->next->next->next->name, "RB"))
-            || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "DOT") && !strcmp(grandChild->next->next->name, "ID")))) {
+             || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "LB") && !strcmp(grandChild->next->next->name, "Exp") && !strcmp(grandChild->next->next->next->name, "RB") && grandChild->next->next->next->next == NULL)
+            || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "DOT") && !strcmp(grandChild->next->next->name, "ID") && grandChild->next->next->next == NULL))) {
                 printf("Error Type 6 at Line %d: Left must be a variable\n", child->lineno);
                 return NULL;
             }
             return AssignOp(left, right, child->lineno);
         }
+        // Exp -> Exp AND Exp
+        else if (!strcmp(child->next->name, "AND")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            return LogicCheck(left, right, child->lineno);
+        }
+        // Exp -> Exp OR Exp
+        else if (!strcmp(child->next->name, "OR")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            return LogicCheck(left, right, child->lineno);
+        }
+        // Exp -> Exp RELOP Exp
+        else if (!strcmp(child->next->name, "RELOP")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            return LogicCheck(left, right, child->lineno);
+        }
+        // Exp -> Exp PLUS Exp
+        else if (!strcmp(child->next->name, "PLUS")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            return ArithmeticCheck(left, right, child->lineno);
+        }
+        // Exp -> Exp MINUS Exp
+        else if (!strcmp(child->next->name, "MINUS")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            return ArithmeticCheck(left, right, child->lineno);
+        }
+        // Exp -> Exp STAR Exp
+        else if (!strcmp(child->next->name, "STAR")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            return ArithmeticCheck(left, right, child->lineno);
+        }
+        // Exp -> Exp DIV Exp
+        else if (!strcmp(child->next->name, "DIC")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            return ArithmeticCheck(left, right, child->lineno);
+        }
+        // Exp -> Exp LB Exp RB
+        else if (!strcmp(child->next->name, "LB")) {
+            Type body = Exp(child);
+            Type index = Exp(child->next->next);
+            if (body == NULL || index == NULL) return NULL;
+            if (body->kind != ARRAY) {
+                printf("Error Type 10 at line %d: \"%s\" is not an array\n", child->lineno, child->attr.val_str);
+                return NULL;
+            }
+            if (!(index->kind == BASIC && index->u.basic == 0)) {
+                printf("Error Type 12 at line %d: \"%s\" is not an integer\n", child->lineno, child->attr.val_str);
+            }
+            return body->u.array.elem;
+        }
+        // Exp -> Exp DOT ID
+        else if (!strcmp(child->next->name, "DOT")) {
+            Type body = Exp(child);
+            // Type id = Exp(child->next->next);
+            if (body->kind != STRUCTURE) {
+                printf("Error Type 13 at line %d: illegal use of '.'\n", child->lineno);
+                return NULL;
+            }
+            FieldList filedList = body->u.structure;
+            while (filedList) {
+                if (!strcmp(filedList->name, child->next->next->name)) {
+                    return filedList->type;
+                }
+                filedList = filedList->tail;
+            }
+            printf("Error Type 14 at line %d: field undefined\n", child->lineno);
+            return NULL;
+        }
+    }
+    // Exp -> MINUS Exp
+    else if (!strcmp(child->name, "MINUS" && !strcmp(child->next->name, "Exp") && child->next->next == NULL)) {
+        Type body = Exp(child->next);
+        if (body->kind != BASIC) {
+            printf("Error Type 7 at line %d: Type mismatched for operands (对非数字变量取负)\n", child->lineno);
+            return NULL;
+        } else {
+            return body;
+        }
+    }
+    // Exp -> NOT Exp
+    else if (!strcmp(child->name, "NOT" && !strcmp(child->next->name, "Exp") && child->next->next == NULL)) {
+        Type body = Exp(child->next);
+        if (body->kind != BASIC || body->u.basic != 0) {
+            printf("Error Type 7 at line %d: Type mismatched for operands (对非整型变量取非)\n", child->lineno);
+            return NULL;
+        } else {
+            return body;
+        }
+    }
+    // Exp -> LP Exp RP
+    else if (!strcmp(child->name, "LP")) {
+        Type body = Exp(child->next);
+        return body;
+    }
+}
+
+Type ArithmeticCheck(Type left, Type right, int line) {
+    if (left == NULL || right == NULL) return NULL;
+    if (left->kind != right->kind) {
+        printf("Error Type 7 at line %d: Type mismatched for operands (different type)\n", line);
+        return NULL;
+    } else if (left->kind == BASIC) {
+        if (left->u.basic == right->u.basic) return left;
+        else {
+            printf("Error Type 7 at line %d: Type mismatched for operands \n", line);
+            return NULL;
+        } 
+    } else {
+        printf("Error Type 7 at line %d: Type mismatched for operands (struct or array)\n", line);
+        return NULL;
+    }
+}
+
+Type LogicCheck(Type left, Type right, int line) {
+    if (left == NULL || right == NULL) return NULL;
+    if (left->kind != right->kind) {
+        printf("Error Type 7 at line %d: Type mismatched for operands (different type)\n", line);
+        return NULL;
+    }
+    else if (left->kind == BASIC) {
+        if (left->u.basic == 0 && right->u.basic == 0) {
+            return left;
+        } else {
+            printf("Error Type 7 at line %d: Type mismatched for operands (float)\n", line);
+            return NULL;
+        }
+    } else {
+        printf("Error Type 7 at line %d: Type mismatched for operands (struct or array)\n", line);
+        return NULL;
     }
 }
 
