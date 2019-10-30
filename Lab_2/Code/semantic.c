@@ -275,6 +275,7 @@ Type Exp (TreeNode* node) {
     TreeNode *child = node->children;
     Type type = NULL;
     // Error Type 1 : VARI undefined
+    // Exp -> ID
     if (!strcmp(child->name, "ID") && child->next == NULL) {
        // printf("Exp->ID\n");
        //  type = (Type)malloc(sizeof(struct Type_));
@@ -292,12 +293,16 @@ Type Exp (TreeNode* node) {
         // else if (checkNode->kind == VARI) {
         //     return checkNode->type;
         // } else return NULL;
-    } else if (!strcmp(child->name, "INT") && child->next == NULL) {
+    } 
+    // Exp -> INT
+    else if (!strcmp(child->name, "INT") && child->next == NULL) {
         type = (Type)malloc(sizeof(struct Type_));
         type->kind = BASIC;
         type->u.basic = 0;
         return type;
-    } else if (!strcmp(child->name, "FLOAT") && child->next == NULL) {
+    } 
+    // Exp -> FLOAT
+    else if (!strcmp(child->name, "FLOAT") && child->next == NULL) {
         type = (Type)malloc(sizeof(struct Type_));
         type->kind = BASIC;
         type->u.basic = 1;
@@ -305,6 +310,7 @@ Type Exp (TreeNode* node) {
     } 
     // Error Type 2: FUNC undefined
     // Function without Params
+    // Exp -> ID LP RP
     else if (!strcmp(child->name, "ID") && !strcmp(child->next->name, "LP") && !strcmp(child->next->next->name, "RP")) {
         HashNode checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
@@ -324,7 +330,9 @@ Type Exp (TreeNode* node) {
                 return NULL;
             }
         }
-    } else if (!strcmp(child->name, "ID") && !strcmp(child->next->next->name, "Args")) {
+    } 
+    // Exp -> ID LP Args RP
+    else if (!strcmp(child->name, "ID") && !strcmp(child->next->next->name, "Args")) {
         HashNode checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
             // 不在符号表中
@@ -345,5 +353,31 @@ Type Exp (TreeNode* node) {
                 return NULL;
             }
         }
+    } else if (!strcmp(child->name, "Exp")) {
+        // Exp -> Exp ASSIGNOP Exp
+        if (!strcmp(child->next->name, "ASSIGNOP")) {
+            Type left = Exp(child);
+            Type right = Exp(child->next->next);
+            if (left == NULL) return NULL;
+            TreeNode *grandChild = child->children;
+            // 赋值号左边只能是ID、Exp LB Exp RB、Exp DOT ID
+            if (!((!strcmp(grandChild->name, "ID") && grandChild->next == NULL) 
+            || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "LB") && !strcmp(grandChild->next->next->name, "Exp") && !strcmp(grandChild->next->next->next->name, "RB"))
+            || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "DOT") && !strcmp(grandChild->next->next->name, "ID")))) {
+                printf("Error Type 6 at Line %d: Left must be a variable\n", child->lineno);
+                return NULL;
+            }
+            return AssignOp(left, right, child->lineno);
+        }
+    }
+}
+
+Type AssignOp(Type left, Type right, int line) {
+    if (left == NULL || right == NULL) return NULL;
+    if (!(typeCmp(left, right))) {
+        return left;
+    } else {
+        printf("Error Type 5 at line %d: Type mismatched for assignment\n", line);
+        return NULL;
     }
 }

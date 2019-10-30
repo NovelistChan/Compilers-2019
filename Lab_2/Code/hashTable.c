@@ -117,3 +117,16 @@ Info checkInfo(HashNode checkNode, NodeType kind) {
     }
     return NULL;
 }
+
+// 0 = equal
+int typeCmp(Type t1, Type t2) {
+    if (t1->kind != t2->kind) return 1;
+    if (t1->kind == STRUCTURE) {
+        return structCmp(t1, t2);
+    } else if (t1->kind == BASIC) {
+        return (t1->u.basic == t2->u.basic) ? 0 : 1;
+    } else {
+        if (t1->u.array.size != t2->u.array.size) return 1;
+        else return typeCmp(t1->u.array.elem, t2->u.array.elem);
+    }
+}

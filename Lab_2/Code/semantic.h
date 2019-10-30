@@ -40,5 +40,6 @@ Type Exp(TreeNode *node);
 FieldList Args(TreeNode *node);
 
 int checkArgs(FieldList paramList1, FieldList paramList2);
+Type AssignOp(Type left, Type right, int line);
 
 #endif
