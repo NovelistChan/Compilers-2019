@@ -150,6 +150,7 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     func->ret = type;
     func->ifReal = isDef;
     func->ifDef = !isDef;
+    func->decLines = NULL;
     func->paramNum = 0;
     func->paramList = NULL;
 
@@ -380,14 +381,14 @@ Type Exp (TreeNode* node) {
             TreeNode *grandChild = child->children;
             // 赋值号左边只能是ID、Exp LB Exp RB、Exp DOT ID
             if (!((!strcmp(grandChild->name, "ID") && grandChild->next == NULL) 
-             || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "LB") && !strcmp(grandChild->next->next->name, "Exp") && !strcmp(grandChild->next->next->next->name, "RB") && grandChild->next->next->next->next == NULL)
+            || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "LB") && !strcmp(grandChild->next->next->name, "Exp") && !strcmp(grandChild->next->next->next->name, "RB") && grandChild->next->next->next->next == NULL)
             || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "DOT") && !strcmp(grandChild->next->next->name, "ID") && grandChild->next->next->next == NULL))) {
                 printf("Error Type 6 at Line %d: Left must be a variable\n", child->lineno);
                 return NULL;
             }
             return AssignOp(left, right, child->lineno);
         }
-        // Exp -> Exp AND Exp
+                // Exp -> Exp AND Exp
         else if (!strcmp(child->next->name, "AND")) {
             Type left = Exp(child);
             Type right = Exp(child->next->next);

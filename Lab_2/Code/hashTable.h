@@ -8,6 +8,7 @@
 
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
+typedef struct DecLine_* DecLine;
 typedef struct Func_* Func;
 typedef struct Info_* Info;
 // Node组成List List组成Table
@@ -40,6 +41,11 @@ struct FieldList_ {
     FieldList tail; // 下一个域
 };
 
+struct DecLine_{
+    int lineno;
+    DecLine next;
+};
+
 struct Func_ {
 //    char *name; // 函数名
     int paramNum; // 参数个数
@@ -47,6 +53,7 @@ struct Func_ {
     FieldList paramList; // 参数列表
     bool ifDef; // 是否已被声明
     bool ifReal; // 是否已被实现
+    DecLine decLines; // 存储声明行号
 };
 
 struct Info_{
