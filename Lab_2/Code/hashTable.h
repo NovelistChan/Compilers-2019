@@ -43,7 +43,7 @@ struct FieldList_ {
 };
 
 struct Func_ {
-    char *name; // 函数名
+//    char *name; // 函数名
     int paramNum; // 参数个数
     Type ret; // 返回值类型
     FieldList paramList; // 参数列表

@@ -22,17 +22,39 @@ void ExtDef(TreeNode *node) {
 
     child = child->next;
     if (!strcmp(child->name, "ExtDecList")) {
-        // TODO
-        ExtDecList(child->next, type);
+        ExtDecList(child, type);
     } else if(!strcmp(child->name, "SEMI")) {
-        // TODO
+        // Nothing
     } else {
         // TODO
+        FunDec(child, type, true);
     }
 }
 
 void ExtDecList(TreeNode *node, Type type) {
+    TreeNode *child = node->children;
+    Type copyType = (Type)malloc(sizeof(struct Type_));
+    memcpy(copyType, type, sizeof(struct Type_));
 
+    char* varName = VarDec(child, copyType);
+
+    HashNode temp = hashCheck(varName);
+    Info info = (Info)malloc(sizeof(struct Info_));
+    info->kind = VARI;
+    info->type = copyType;
+    info->next = NULL;
+    if(temp){
+        temp->info->next = info;
+        printf("Error type 3 at Line %d: Redefined variable \"%s\"", child->lineno, varName);
+    }else{
+        HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
+        hashNode->name = varName;
+        hashNode->info = info;
+        insertHashtNode(hashNode);
+    }
+
+    child = child->next->next;  // skip COMMA(",")
+    ExtDecList(child, type);
 }
 
 Type Specifier(TreeNode *node) {
@@ -53,7 +75,6 @@ Type Specifier(TreeNode *node) {
 Type StructSpecifier(TreeNode *node) {
     TreeNode *child = node->children->next; // skip STRUCT
     if(!strcmp(child->name, "OptTag")){ /* ******* defined ******* */
-        // HashNode hashNode = createHashNode(OptTag(child), VARI);
         char* hashName = OptTag(child);
 
         child = child->next->next; // skip LC("{")
@@ -107,7 +128,26 @@ char* Tag(TreeNode *node){
 }
 
 char* VarDec(TreeNode *node, Type type){
+    TreeNode *child = node->children;
+    if(!strcmp(child->name, "ID")){
+        return child->name;
+    }
 
+    Type copyType = (Type)malloc(sizeof(struct Type_));
+    memcpy(copyType, type, sizeof(struct Type_));
+    type->kind = ARRAY;
+    type->u.array.elem = copyType;
+    child = child->next->next;  // skip LB("[")
+    type->u.array.size = child->attr.val_int;
+    return VarDec(node->next, type);
+    // skip RB("]")
+}
+
+void FunDec(TreeNode *node, Type type, bool isDef){
+    TreeNode *child = node->children;
+    char* funcName = child->attr.val_str;
+    Func func = (Func)malloc(sizeof(struct Func_));
+    // TODO
 }
 
 void DefList(TreeNode *node, bool isStruct, FieldList fieldList){
@@ -144,6 +184,7 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
     memcpy(newType, type, sizeof(struct Type_));
     char* varName = VarDec(child, newType);
 
+    bool isFirstError = true;
     if(isStruct){
         FieldList newFieldList = (FieldList)malloc(sizeof(struct FieldList_));
         newFieldList->name = varName;
@@ -156,7 +197,6 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
             fieldList = newFieldList;
         }else{
             FieldList temp = fieldList;
-            bool isFirstError = true;
             while(temp->tail){
                 if(isFirstError && !strcmp(temp->name, newFieldList->name)){
                     isFirstError = false;
@@ -175,7 +215,10 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
     info->next = NULL;
     if(temp){
         temp->info->next = info;
-        printf("Error type 3 at Line %d: Redefined variable \"%s\"", child->lineno, varName);
+        if(isFirstError){
+            isFirstError = false;
+            printf("Error type 3 at Line %d: Redefined variable \"%s\"", child->lineno, varName);
+        }
     }else{
         HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
         hashNode->name = varName;

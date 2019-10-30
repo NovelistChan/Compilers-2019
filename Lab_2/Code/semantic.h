@@ -23,7 +23,7 @@ char* OptTag(TreeNode *node);
 char* Tag(TreeNode *node);
 
 char* VarDec(TreeNode *node, Type type);
-void FunDec(TreeNode *node);
+void FunDec(TreeNode *node, Type type, bool isDef);
 void VarList(TreeNode *node);
 void ParamDec(TreeNode *node);
 
