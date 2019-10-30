@@ -3,6 +3,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "stdbool.h"
 #include "string.h"
 
 typedef struct Type_* Type;
@@ -12,9 +13,6 @@ typedef struct Info_* Info;
 // Node组成List List组成Table
 typedef struct HashNode_* HashNode;
 typedef struct TableNode_* TableNode;
-typedef enum {
-    TRUE, FALSE
-} Bool;
 
 typedef enum {
     BASIC, ARRAY, STRUCTURE
@@ -47,8 +45,8 @@ struct Func_ {
     int paramNum; // 参数个数
     Type ret; // 返回值类型
     FieldList paramList; // 参数列表
-    Bool ifDef; // 是否已被声明
-    Bool ifReal; // 是否已被实现
+    bool ifDef; // 是否已被声明
+    bool ifReal; // 是否已被实现
 };
 
 struct Info_{

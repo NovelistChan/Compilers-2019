@@ -1,9 +1,5 @@
 #ifndef __SEMANTIC_H__
 #define __SEMANTIC_H__
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include "hashTable.h"
 #include "syntaxTree.h"
 
@@ -24,7 +20,7 @@ char* Tag(TreeNode *node);
 
 char* VarDec(TreeNode *node, Type type);
 void FunDec(TreeNode *node, Type type, bool isDef);
-void VarList(TreeNode *node);
+FieldList VarList(TreeNode *node);
 void ParamDec(TreeNode *node);
 
 void CompSt(TreeNode *node);

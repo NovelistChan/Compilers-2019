@@ -147,7 +147,24 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     TreeNode *child = node->children;
     char* funcName = child->attr.val_str;
     Func func = (Func)malloc(sizeof(struct Func_));
-    // TODO
+    func->ret = type;
+    func->ifReal = isDef;
+    func->ifDef = !isDef;
+    func->paramNum = 0;
+    func->paramList = NULL;
+
+    child = child->next->next;  // skip LP("(")
+    if(strcmp(child->name, "VarList")){
+        func->paramList = VarList(child);
+        FieldList p = func->paramList;
+        while(p){
+            p = p->tail;
+        }
+    }
+}
+
+FieldList VarList(TreeNode *node){
+
 }
 
 void DefList(TreeNode *node, bool isStruct, FieldList fieldList){
