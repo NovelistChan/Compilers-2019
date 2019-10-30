@@ -27,24 +27,24 @@ TreeNode *createNewNodeNot(char* name, int lineno){ // for type=NOTEND
     return newNode;
 }
 
-TreeNode *createNewNodeID(char* name){  // for type=IDEND
+TreeNode *createNewNodeID(char* name, int lineno){  // for type=IDEND
     TreeNode *newNode = (TreeNode *)malloc(sizeof(TreeNode));
 
     newNode->type = IDEND;
     newNode->children = NULL;
-    newNode->lineno = 0;
+    newNode->lineno = lineno;
     strcpy(newNode->name, name);
     newNode->next = NULL;
 
     return newNode;
 }
 
-TreeNode *createNewNodeVal(char* name, char* val){ // for type=VALEND
+TreeNode *createNewNodeVal(char* name, char* val, int lineno){ // for type=VALEND
     TreeNode *newNode = (TreeNode *)malloc(sizeof(TreeNode));
 
     newNode->type = VALEND;
     newNode->children = NULL;
-    newNode->lineno = 0;
+    newNode->lineno = lineno;
     newNode->next = NULL;
 
     //strcpy(newNode->name, name);

@@ -27,8 +27,8 @@ typedef struct treeNode {
 } TreeNode;
 
 TreeNode *createNewNodeNot(char* name, int lineno); // for type=NOTEND
-TreeNode *createNewNodeID(char* name);  // for type=IDEND
-TreeNode *createNewNodeVal(char* name, char* val); // for type=VALEND
+TreeNode *createNewNodeID(char* name, int lineno);  // for type=IDEND
+TreeNode *createNewNodeVal(char* name, char* val, int lineno); // for type=VALEND
 void insertNode(TreeNode *parent, TreeNode *child);
 void printTree(TreeNode *root, int layer);
 

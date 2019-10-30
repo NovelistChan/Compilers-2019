@@ -67,52 +67,52 @@ RC \}
 }
 
 {DEC} {
-  yylval.type_node = createNewNodeVal("DEC", yytext);
+  yylval.type_node = createNewNodeVal("DEC", yytext, yylineno);
   return INT;
 }
 
 {HEX} {
-  yylval.type_node = createNewNodeVal("HEX", yytext);
+  yylval.type_node = createNewNodeVal("HEX", yytext, yylineno);
   return INT;
 }
 
 {OCT} {
-  yylval.type_node = createNewNodeVal("OCT", yytext);
+  yylval.type_node = createNewNodeVal("OCT", yytext, yylineno);
   return INT;
 }
 
 {FLOAT} {
-  yylval.type_node = createNewNodeVal("FLOAT", yytext);
+  yylval.type_node = createNewNodeVal("FLOAT", yytext, yylineno);
   return FLOAT;
 }
 
 {STRUCT} {
-  yylval.type_node = createNewNodeID("STRUCT");
+  yylval.type_node = createNewNodeID("STRUCT", yylineno);
   return STRUCT;
 }
 
 {RETURN} {
-  yylval.type_node = createNewNodeID("RETURN");
+  yylval.type_node = createNewNodeID("RETURN", yylineno);
   return RETURN;
 }
 
 {IF} {
-  yylval.type_node = createNewNodeID("IF");
+  yylval.type_node = createNewNodeID("IF", yylineno);
   return IF;
 }
 
 {ELSE} {
-  yylval.type_node = createNewNodeID("ELSE");
+  yylval.type_node = createNewNodeID("ELSE", yylineno);
   return ELSE;
 }
 
 {WHILE} {
-  yylval.type_node = createNewNodeID("WHILE");
+  yylval.type_node = createNewNodeID("WHILE", yylineno);
   return WHILE;
 }
 
 {TYPE} {
-  yylval.type_node = createNewNodeVal("TYPE", yytext);
+  yylval.type_node = createNewNodeVal("TYPE", yytext, yylineno);
   return TYPE;
 }
 
@@ -121,97 +121,97 @@ RC \}
 {LINE} { yycolumn = 1; }
 
 {ID} {
-  yylval.type_node = createNewNodeVal("ID", yytext);
+  yylval.type_node = createNewNodeVal("ID", yytext, yylineno);
   return ID;
 }
 
 {SEMI} {
-  yylval.type_node = createNewNodeID("SEMI");
+  yylval.type_node = createNewNodeID("SEMI", yylineno);
   return SEMI;
 }
 
 {COMMA} {
-  yylval.type_node = createNewNodeID("COMMA");
+  yylval.type_node = createNewNodeID("COMMA", yylineno);
   return COMMA;
 }
 
 {ASSIGNOP} {
-  yylval.type_node = createNewNodeID("ASSIGNOP");
+  yylval.type_node = createNewNodeID("ASSIGNOP", yylineno);
   return ASSIGNOP;
 }
 
 {RELOP} {
-  yylval.type_node = createNewNodeVal("RELOP", yytext);
+  yylval.type_node = createNewNodeVal("RELOP", yytext, yylineno);
   return RELOP;
 }
 
 {PLUS} {
-  yylval.type_node = createNewNodeID("PLUS");
+  yylval.type_node = createNewNodeID("PLUS", yylineno);
   return PLUS;
 }
 
 {MINUS} {
-  yylval.type_node = createNewNodeID("MINUS");
+  yylval.type_node = createNewNodeID("MINUS", yylineno);
   return MINUS;
 }
 
 {STAR} {
-  yylval.type_node = createNewNodeID("STAR");
+  yylval.type_node = createNewNodeID("STAR", yylineno);
   return STAR;
 }
 
 {DIV} {
-  yylval.type_node = createNewNodeID("DIV");
+  yylval.type_node = createNewNodeID("DIV", yylineno);
   return DIV;
 }
 
 {AND} {
-  yylval.type_node = createNewNodeID("AND");
+  yylval.type_node = createNewNodeID("AND", yylineno);
   return AND;
 }
 
 {OR} {
-  yylval.type_node = createNewNodeID("OR");
+  yylval.type_node = createNewNodeID("OR", yylineno);
   return OR;
 }
 
 {DOT} {
-  yylval.type_node = createNewNodeID("DOT");
+  yylval.type_node = createNewNodeID("DOT", yylineno);
   return DOT;
 }
 
 {NOT} {
-  yylval.type_node = createNewNodeID("NOT");
+  yylval.type_node = createNewNodeID("NOT", yylineno);
   return NOT;
 }
 
 {LP} {
-  yylval.type_node = createNewNodeID("LP");
+  yylval.type_node = createNewNodeID("LP", yylineno);
   return LP;
 }
 
 {RP} {
-  yylval.type_node = createNewNodeID("RP");
+  yylval.type_node = createNewNodeID("RP", yylineno);
   return RP;
 }
 
 {LB} {
-  yylval.type_node = createNewNodeID("LB");
+  yylval.type_node = createNewNodeID("LB", yylineno);
   return LB;
 }
 
 {RB} {
-  yylval.type_node = createNewNodeID("RB");
+  yylval.type_node = createNewNodeID("RB", yylineno);
   return RB;
 }
 
 {LC} {
-  yylval.type_node = createNewNodeID("LC");
+  yylval.type_node = createNewNodeID("LC", yylineno);
   return LC;
 }
 
 {RC} {
-  yylval.type_node = createNewNodeID("RC");
+  yylval.type_node = createNewNodeID("RC", yylineno);
   return RC;
 }
 
