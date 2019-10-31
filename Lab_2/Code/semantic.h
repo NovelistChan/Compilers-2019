@@ -23,9 +23,9 @@ void FunDec(TreeNode *node, Type type, bool isDef);
 FieldList VarList(TreeNode *node);
 FieldList ParamDec(TreeNode *node);
 
-void CompSt(TreeNode *node);
-void StmtList(TreeNode *node);
-void Stmt(TreeNode *node);
+void CompSt(TreeNode *node, Type retType);
+void StmtList(TreeNode *node, Type retType);
+void Stmt(TreeNode *node, Type retType);
 
 void DefList(TreeNode *node, bool isStruct, FieldList fieldList);
 void Def(TreeNode *node, bool isStruct, FieldList fieldList);

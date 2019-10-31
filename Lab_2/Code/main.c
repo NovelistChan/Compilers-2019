@@ -20,7 +20,6 @@ int main(int argc, char** argv){
   yyparse();
 
   if(is_pass){
-    // TODO initHashTable, semantic analysis
     createHashTable();
     semanticAnalysis();
   }

@@ -1,7 +1,7 @@
 #include "hashTable.h"
 #include <stdio.h>
 #include <string.h>
-#define TABLE_SIZE 100
+#define TABLE_SIZE 16384
 
 // HashList hashTable[TABLE_SIZE];
 TableNode *hashTable = NULL;

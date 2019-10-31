@@ -11,7 +11,11 @@ void Program(TreeNode *node) {
 void ExtDefList(TreeNode *node) {
     TreeNode *child = node->children;
     if (child) {
-        ExtDef(child);
+        if(!strcmp(child->name, "ExtDef")){
+            ExtDef(child);
+        }else{
+            FunDeclaration(child);
+        }
         ExtDefList(child->next);
     }
 }
@@ -27,10 +31,9 @@ void ExtDef(TreeNode *node) {
     } else if(!strcmp(child->name, "SEMI")) {
         // Nothing
     } else {
-        // TODO
         FunDec(child, type, true);
         child = child->next;
-        CompSt(child);
+        CompSt(child, type);
     }
 }
 
@@ -58,6 +61,14 @@ void ExtDecList(TreeNode *node, Type type) {
 
     child = child->next->next;  // skip COMMA(",")
     ExtDecList(child, type);
+}
+
+void FunDeclaration(TreeNode *node){
+    TreeNode *child = node->children;
+    Type type = Specifier(child);
+    child = child->next;
+    FunDec(child, type, false);
+    // skip SEMI
 }
 
 Type Specifier(TreeNode *node) {
@@ -248,9 +259,52 @@ FieldList ParamDec(TreeNode *node){
     return ret;
 }
 
-void CompSt(TreeNode *node){
+void CompSt(TreeNode *node, Type retType){
     TreeNode *child = node->children->next;  // skip LC("{")
-    
+    DefList(child, false, NULL);
+    child = child->next;
+    StmtList(child, retType);
+    // skip RC("}")
+}
+
+void StmtList(TreeNode *node, Type retType){
+    TreeNode *child = node->children;
+    if(child){
+        Stmt(child, retType);
+        child = child->next;
+        StmtList(child, retType);
+    }
+}
+
+void Stmt(TreeNode *node, Type retType){
+    TreeNode *child = node->children;
+    if(!strcmp(child->name, "Exp")){
+        Exp(child);
+        // skip SEMI(";")
+    }else if(!strcmp(child->name, "CompSt")){
+        CompSt(child, retType);
+    }else if(!strcmp(child->name, "RETURN")){
+        child = child->next;    // skip RETURN
+        if(typeCmp(retType, Exp(child))){
+            printf("Error type 8 at Line %d: Type mismatched for return.\n", child->lineno);
+            // skip SEMI(";")
+        }
+    }else if(!strcmp(child->name, "IF")){
+        child = child->next->next;  // skip IF and LP
+        Exp(child);
+        child = child->next->next;  // skip RP
+        Stmt(child, retType);
+        child = child->next;
+        if(child){
+            child = child->next;    // skip ELSE
+            Stmt(child, retType);
+        }
+    }else{
+        child = child->next->next;  // skip WHILE and LP
+        Exp(child);
+        child = child->next->next;  // skip RP
+        Stmt(child, retType);
+    }
 }
 
 void DefList(TreeNode *node, bool isStruct, FieldList fieldList){
@@ -335,8 +389,7 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
             printf("Error type 15 at Line %d: Field \"%s\" should not be initialized.", node->children->lineno, varName);
         }
         else{
-            // TODO check ASSIGNOP("=")
-            child = child->next;
+            AssignOp(newType, Exp(child->next), child->lineno);
         }
     }
 }
