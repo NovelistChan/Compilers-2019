@@ -56,7 +56,7 @@ void ExtDecList(TreeNode *node, Type type) {
         HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
         hashNode->name = varName;
         hashNode->info = info;
-        insertHashtNode(hashNode);
+        insertHashNode(hashNode);
     }
 
     child = child->next->next;  // skip COMMA(",")
@@ -110,7 +110,7 @@ Type StructSpecifier(TreeNode *node) {
                 HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
                 hashNode->name = hashName;
                 hashNode->info = info;
-                insertHashtNode(hashNode);
+                insertHashNode(hashNode);
             }
         }
         return type;
@@ -195,7 +195,7 @@ void FunDec(TreeNode *node, Type type, bool isDef){
         HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
         newNode->name = funcName;
         newNode->info = newInfo;
-        insertHashtNode(newNode);
+        insertHashNode(newNode);
     }else{
         Info p = checkNode->info;
         while(p){
@@ -380,7 +380,7 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
         HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
         hashNode->name = varName;
         hashNode->info = info;
-        insertHashtNode(hashNode);
+        insertHashNode(hashNode);
     }
 
     child = child->next;
@@ -609,7 +609,7 @@ Type Exp (TreeNode* node) {
         }
     }
     // Exp -> MINUS Exp
-    else if (!strcmp(child->name, "MINUS" && !strcmp(child->next->name, "Exp") && child->next->next == NULL)) {
+    else if (!strcmp(child->name, "MINUS") && !strcmp(child->next->name, "Exp") && child->next->next == NULL) {
         Type body = Exp(child->next);
         if (body->kind != BASIC) {
             printf("Error Type 7 at line %d: Type mismatched for operands (对非数字变量取负)\n", child->lineno);
@@ -619,7 +619,7 @@ Type Exp (TreeNode* node) {
         }
     }
     // Exp -> NOT Exp
-    else if (!strcmp(child->name, "NOT" && !strcmp(child->next->name, "Exp") && child->next->next == NULL)) {
+    else if (!strcmp(child->name, "NOT") && !strcmp(child->next->name, "Exp") && child->next->next == NULL) {
         Type body = Exp(child->next);
         if (body->kind != BASIC || body->u.basic != 0) {
             printf("Error Type 7 at line %d: Type mismatched for operands (对非整型变量取非)\n", child->lineno);
