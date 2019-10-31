@@ -130,3 +130,14 @@ int typeCmp(Type t1, Type t2) {
         else return typeCmp(t1->u.array.elem, t2->u.array.elem);
     }
 }
+
+// 0 = equal
+int funcCmp(Func f1, Func f2){
+    if(f1->paramNum != f2->paramNum){
+        return 1;
+    }
+    if(typeCmp(f1->ret, f2->ret)==0 || fieldCmp(f1->paramList, f2->paramList)){
+        return 1;
+    }
+    return 0;
+}

@@ -21,7 +21,7 @@ char* Tag(TreeNode *node);
 char* VarDec(TreeNode *node, Type type);
 void FunDec(TreeNode *node, Type type, bool isDef);
 FieldList VarList(TreeNode *node);
-void ParamDec(TreeNode *node);
+FieldList ParamDec(TreeNode *node);
 
 void CompSt(TreeNode *node);
 void StmtList(TreeNode *node);

@@ -23,11 +23,14 @@ void ExtDef(TreeNode *node) {
     child = child->next;
     if (!strcmp(child->name, "ExtDecList")) {
         ExtDecList(child, type);
+        // skip SEMI
     } else if(!strcmp(child->name, "SEMI")) {
         // Nothing
     } else {
         // TODO
         FunDec(child, type, true);
+        child = child->next;
+        CompSt(child);
     }
 }
 
@@ -148,11 +151,11 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     char* funcName = child->attr.val_str;
     Func func = (Func)malloc(sizeof(struct Func_));
     func->ret = type;
-    func->ifReal = isDef;
-    func->ifDef = !isDef;
-    func->decLines = NULL;
     func->paramNum = 0;
     func->paramList = NULL;
+    func->ifDef = !isDef;
+    func->ifReal = isDef;
+    func->decLines = NULL;
 
     child = child->next->next;  // skip LP("(")
     if(strcmp(child->name, "VarList")){
@@ -160,12 +163,94 @@ void FunDec(TreeNode *node, Type type, bool isDef){
         FieldList p = func->paramList;
         while(p){
             p = p->tail;
+            func->paramNum ++;
+        }
+    }
+    // skip RP(")")
+
+    if(!isDef){
+        DecLine decLine = (DecLine)malloc(sizeof(struct DecLine_));
+        decLine->lineno = child->lineno;
+        decLine->next = NULL;
+        func->decLines = decLine;
+    }
+    // check hashTable
+    Info newInfo = (Info)malloc(sizeof(struct Info_));
+    newInfo->kind = FUNC;
+    newInfo->func = func;
+    newInfo->next = NULL;
+    HashNode checkNode = hashCheck(funcName);
+    if(!checkNode){
+        HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
+        newNode->name = funcName;
+        newNode->info = newInfo;
+        insertHashtNode(newNode);
+    }else{
+        Info p = checkNode->info;
+        while(p){
+            if(p->kind==FUNC && !funcCmp(p->func, func)){
+                if(isDef){
+                    // Redefined function
+                    if(p->func->ifReal){
+                        printf("Error type 4 at Line %d: Redefined function \"%s\"", child->lineno, funcName);
+                    }else{
+                        p->func->ifReal = true;
+                    }
+                }else{
+                    if(!p->func->ifDef){
+                        p->func->ifDef = true;
+                        p->func->decLines = func->decLines;
+                    }else{
+                        DecLine q = p->func->decLines;
+                        while(q->next){
+                            q = q->next;
+                        }
+                        q->next = func->decLines;
+                    }
+                }
+            }
+            break;
+        }
+        if(!p){
+            p = checkNode->info;
+            while(p->next){
+                p = p->next;
+            }
+            p->next = newInfo;
+            if(isDef){
+                    printf("Error type 4 at Line %d: Redefined function \"%s\"", child->lineno, funcName);
+            }else{
+                    printf("Error type 19 at Line %d: Conflicting declaration and definition of function \"%s\"", child->lineno, funcName);
+            }
         }
     }
 }
 
 FieldList VarList(TreeNode *node){
+    TreeNode *child = node->children;
+    FieldList ret = ParamDec(child);
+    child = child->next;
+    if(child){
+        child = child->next;    // skip COMMA(",")
+        ret->tail = VarList(child);
+    }
+    return ret;
+}
 
+FieldList ParamDec(TreeNode *node){
+    TreeNode *child = node->children;
+    Type type = Specifier(child);
+    child = child->next;
+    FieldList ret = (FieldList)malloc(sizeof(struct FieldList_));
+    ret->name = VarDec(child, type);
+    ret->type = type;
+    ret->tail = NULL;
+    return ret;
+}
+
+void CompSt(TreeNode *node){
+    TreeNode *child = node->children->next;  // skip LC("{")
+    
 }
 
 void DefList(TreeNode *node, bool isStruct, FieldList fieldList){
@@ -388,7 +473,7 @@ Type Exp (TreeNode* node) {
             }
             return AssignOp(left, right, child->lineno);
         }
-                // Exp -> Exp AND Exp
+        // Exp -> Exp AND Exp
         else if (!strcmp(child->next->name, "AND")) {
             Type left = Exp(child);
             Type right = Exp(child->next->next);
