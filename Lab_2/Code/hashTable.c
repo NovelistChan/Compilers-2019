@@ -20,6 +20,7 @@ void createHashTable() {
     int i = 0;
     for (; i < TABLE_SIZE; i++) {
 //        hashTable[i]->nodeNum = 0;
+        hashTable[i] = (TableNode)malloc(sizeof(struct TableNode_));
         hashTable[i]->hashList = NULL;
     }
 }

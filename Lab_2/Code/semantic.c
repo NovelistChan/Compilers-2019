@@ -5,18 +5,20 @@ void semanticAnalysis() {
 }
 
 void Program(TreeNode *node) {
-    ExtDefList(node);
+    TreeNode *child = node->children;
+    ExtDefList(child);
 }
 
 void ExtDefList(TreeNode *node) {
     TreeNode *child = node->children;
-    if (child) {
-        if(!strcmp(child->name, "ExtDef")){
-            ExtDef(child);
-        }else{
-            FunDeclaration(child);
-        }
-        ExtDefList(child->next);
+    if(!strcmp(child->name, "ExtDef")){
+        ExtDef(child);
+    }else{
+        FunDeclaration(child);
+    }
+    child = child->next;
+    if(child){
+        ExtDefList(child);
     }
 }
 
@@ -59,8 +61,11 @@ void ExtDecList(TreeNode *node, Type type) {
         insertHashNode(hashNode);
     }
 
-    child = child->next->next;  // skip COMMA(",")
-    ExtDecList(child, type);
+    child = child->next;
+    if(child){
+        child = child->next;  // skip COMMA(",")
+        ExtDecList(child, type);
+    }
 }
 
 void FunDeclaration(TreeNode *node){
@@ -88,14 +93,32 @@ Type Specifier(TreeNode *node) {
 
 Type StructSpecifier(TreeNode *node) {
     TreeNode *child = node->children->next; // skip STRUCT
-    if(!strcmp(child->name, "OptTag")){ /* ******* defined ******* */
-        char* hashName = OptTag(child);
+    if(!strcmp(child->name, "Tag")){ /* ******* use ******* */
+        char* sname = Tag(child);
+        HashNode hashNode = hashCheck(sname);
+        if(hashNode && hashNode->info->kind==VARI && hashNode->info->type->kind==STRUCTURE){
+            return hashNode->info->type;
+        }else{
+            Type type = (Type)malloc(sizeof(struct Type_));
+            type->kind = STRUCTURE;
+            type->u.structure = NULL;
+            return type;
+            printf("Error type 17 at Line %d: Undefined structure \"%s\"", child->lineno, sname);
+        }
+    }else{  /* ******* define ******* */
+        char* hashName = "";
+        if(!strcmp(child->name, "OptTag")){
+            hashName = OptTag(child);
+            child = child->next;
+        }
 
-        child = child->next->next; // skip LC("{")
+        child = child->next; // skip LC("{")
         Type type = (Type)malloc(sizeof(struct Type_));
         type->kind = STRUCTURE;
         type->u.structure = NULL;
-        DefList(child, true, type->u.structure);
+        if(!strcmp(child->name, "DefList")){
+            DefList(child, true, type->u.structure);
+        }
         // skip RC("}")
         if(strcmp(hashName, "")){
             Info info = (Info)malloc(sizeof(struct Info_));
@@ -114,27 +137,12 @@ Type StructSpecifier(TreeNode *node) {
             }
         }
         return type;
-    }else{  /* ******* use ******* */
-        char* sname = OptTag(child);
-        HashNode hashNode = hashCheck(sname);
-        if(hashNode && hashNode->info->kind==VARI && hashNode->info->type->kind==STRUCTURE){
-            return hashNode->info->type;
-        }else{
-            Type type = (Type)malloc(sizeof(struct Type_));
-            type->kind = STRUCTURE;
-            type->u.structure = NULL;
-            return type;
-            printf("Error type 17 at Line %d: Undefined structure \"%s\"", child->lineno, sname);
-        }
     }
 }
 
 char* OptTag(TreeNode *node){
     TreeNode *child = node->children;
-    if(child){
-        return child->attr.val_str;
-    }
-    return "";
+    return child->attr.val_str;;
 }
 
 char* Tag(TreeNode *node){
@@ -261,17 +269,21 @@ FieldList ParamDec(TreeNode *node){
 
 void CompSt(TreeNode *node, Type retType){
     TreeNode *child = node->children->next;  // skip LC("{")
-    DefList(child, false, NULL);
-    child = child->next;
-    StmtList(child, retType);
+    if(!strcmp(child->name, "DefList")){
+        DefList(child, false, NULL);
+        child = child->next;
+    }
+    if(!strcmp(child->name, "StmtList")){
+        StmtList(child, retType);
+    }
     // skip RC("}")
 }
 
 void StmtList(TreeNode *node, Type retType){
     TreeNode *child = node->children;
+    Stmt(child, retType);
+    child = child->next;
     if(child){
-        Stmt(child, retType);
-        child = child->next;
         StmtList(child, retType);
     }
 }
@@ -309,9 +321,9 @@ void Stmt(TreeNode *node, Type retType){
 
 void DefList(TreeNode *node, bool isStruct, FieldList fieldList){
     TreeNode *child = node->children;
+    Def(child, isStruct, fieldList);
+    child = child->next;
     if(child){
-        Def(child, isStruct, fieldList);
-        child = child->next;
         DefList(child, isStruct, fieldList);
     }
 }
