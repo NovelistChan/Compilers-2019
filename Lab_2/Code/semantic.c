@@ -275,14 +275,26 @@ void FunDec(TreeNode *node, Type type, bool isDef){
         }
         if(!p){
             p = checkNode->info;
+            bool decConflict = true;
             while(p->next){
+                if(p->kind == FUNC && p->func->ifReal){
+                    decConflict = false;
+                }
                 p = p->next;
             }
             p->next = newInfo;
             if(isDef){
-                    fprintf(stderr, "Error type 4 at Line %d: Redefined function \"%s\".\n", child->lineno, funcName);
-            }else{
+                if(decConflict){
                     fprintf(stderr, "Error type 19 at Line %d: Conflicting declaration and definition of function \"%s\".\n", child->lineno, funcName);
+                }else{
+                    fprintf(stderr, "Error type 4 at Line %d: Redefined function \"%s\".\n", child->lineno, funcName);
+                }
+            }else{
+                if(decConflict){
+                    fprintf(stderr, "Error type 19 at Line %d: Inconsistent declaration of function \"%s\".\n", child->lineno, funcName);
+                }else{
+                    fprintf(stderr, "Error type 19 at Line %d: Conflicting declaration and definition of function \"%s\".\n", child->lineno, funcName);
+                }
             }
         }
     }
