@@ -25,6 +25,20 @@ void createHashTable() {
     }
 }
 
+void printHashTable() {
+    int i = 0;
+    printf("HashTable: \n");
+    for (; i <TABLE_SIZE; i++) {
+        if (hashTable[i]->hashList != NULL) {
+            HashNode p = hashTable[i]->hashList;
+            while (p) {
+                printf("NodeName: %s\n", p->name);
+                p = p->next;
+            }
+        }
+    }
+}
+
 HashNode createHashNode(char *name, NodeType kind) {
     HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
     Info newInfo = (Info)malloc(sizeof(struct Info_));
