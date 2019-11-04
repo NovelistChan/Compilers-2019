@@ -638,7 +638,7 @@ Type Exp (TreeNode* node) {
                 }
                 filedList = filedList->tail;
             }
-            fprintf(stderr, "Error type 14 at line %d: field undefined\n", child->lineno);
+            fprintf(stderr, "Error type 14 at line %d: Non-existent filed \"%s\"\n", child->lineno, child->next->next->attr.val_str);
             return NULL;
         }
     }
