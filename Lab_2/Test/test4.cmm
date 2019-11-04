@@ -5,7 +5,7 @@ int func(int i)
 
 int func()
 {
-    retun 0;
+    return 0;
 }
 
 int main()
