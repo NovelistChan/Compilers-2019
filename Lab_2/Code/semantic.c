@@ -161,7 +161,7 @@ char* VarDec(TreeNode *node, Type type){
     type->u.array.elem = copyType;
     child = child->next->next;  // skip LB("[")
     type->u.array.size = child->attr.val_int;
-    return VarDec(node->next, type);
+    return VarDec(node->children, type);
     // skip RB("]")
 }
 
@@ -470,7 +470,7 @@ Type Exp (TreeNode* node) {
         HashNode checkNode = NULL;
         checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
-            fprintf(stderr, "Error Type 1 at Line %d: Undefined variable \"%s\".\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error type 1 at Line %d: Undefined variable \"%s\".\n", child->lineno, child->attr.val_str);
             return NULL;
         } 
         else {
@@ -503,18 +503,18 @@ Type Exp (TreeNode* node) {
         HashNode checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
             // 不在符号表中
-            fprintf(stderr, "Error Type 2 at Line %d: Undefined function \"%s\".\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error type 2 at Line %d: Undefined function \"%s\".\n", child->lineno, child->attr.val_str);
             return NULL;
         } else if (checkInfo(checkNode, FUNC) == NULL) {
             // 在符号表中但是变量
-            fprintf(stderr, "Error Type 11 at Line %d: \"%s\" is not a function.\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error type 11 at Line %d: \"%s\" is not a function.\n", child->lineno, child->attr.val_str);
         } else {
             Info info = checkInfo(checkNode, FUNC);
             if (info->func->paramList == NULL) {
                 return info->func->ret;
             } else {
                 // 引用了带参函数
-                fprintf(stderr, "Error Type 9 at Line %d: Arguments are not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error type 9 at Line %d: Arguments are not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
                 return NULL;
             }
         }
@@ -524,11 +524,11 @@ Type Exp (TreeNode* node) {
         HashNode checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
             // 不在符号表中
-            fprintf(stderr, "Error Type 2 at Line %d: Undefined function \"%s\".\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error type 2 at Line %d: Undefined function \"%s\".\n", child->lineno, child->attr.val_str);
             return NULL;
         } else if (checkInfo(checkNode, FUNC) == NULL){
             // 在符号表中但是变量
-            fprintf(stderr, "Error Type 11 at Line %d: \"%s\" is not a function.\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error type 11 at Line %d: \"%s\" is not a function.\n", child->lineno, child->attr.val_str);
         } else {
             Info info = checkInfo(checkNode, FUNC);
             FieldList childParamList = Args(child->next->next);
@@ -537,7 +537,7 @@ Type Exp (TreeNode* node) {
                 return info->func->ret;
             } else {
                 // 参数列表不匹配
-                fprintf(stderr, "Error Type 9 at Line %d: Arguments are not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error type 9 at Line %d: Arguments are not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
                 return NULL;
             }
         }
@@ -553,7 +553,7 @@ Type Exp (TreeNode* node) {
             if (!((!strcmp(grandChild->name, "ID") && grandChild->next == NULL) 
             || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "LB") && !strcmp(grandChild->next->next->name, "Exp") && !strcmp(grandChild->next->next->next->name, "RB") && grandChild->next->next->next->next == NULL)
             || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "DOT") && !strcmp(grandChild->next->next->name, "ID") && grandChild->next->next->next == NULL))) {
-                fprintf(stderr, "Error Type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", child->lineno);
+                fprintf(stderr, "Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", child->lineno);
                 return NULL;
             }
             return AssignOp(left, right, child->lineno);
@@ -615,12 +615,11 @@ Type Exp (TreeNode* node) {
             if (body == NULL || index == NULL) return NULL;
             if (body->kind != ARRAY) {
                 // printf("child->attr.val_str: %s\n", child->attr.val_str);
-                fprintf(stderr, "Error Type 10 at line %d: The variable before [] is not an array.\n", child->lineno);
+                fprintf(stderr, "Error type 10 at line %d: The variable before [] is not an array.\n", child->lineno);
                 return NULL;
             }
             if (!(index->kind == BASIC && index->u.basic == 0)) {
-                printf("child->next->next->attr.val_str: %s\n", child->next->next->attr.val_str);
-                fprintf(stderr, "Error Type 12 at line %d: in [] is not an integer.\n", child->lineno);
+                fprintf(stderr, "Error type 12 at line %d: The number in [] is not an integer.\n", child->lineno);
             }
             return body->u.array.elem;
         }
@@ -629,7 +628,7 @@ Type Exp (TreeNode* node) {
             Type body = Exp(child);
             // Type id = Exp(child->next->next);
             if (body->kind != STRUCTURE) {
-                fprintf(stderr, "Error Type 13 at line %d: Illegal use of \".\".\n", child->lineno);
+                fprintf(stderr, "Error type 13 at line %d: Illegal use of \".\".\n", child->lineno);
                 return NULL;
             }
             FieldList filedList = body->u.structure;
@@ -639,7 +638,7 @@ Type Exp (TreeNode* node) {
                 }
                 filedList = filedList->tail;
             }
-            fprintf(stderr, "Error Type 14 at line %d: field undefined\n", child->lineno);
+            fprintf(stderr, "Error type 14 at line %d: field undefined\n", child->lineno);
             return NULL;
         }
     }
@@ -647,7 +646,7 @@ Type Exp (TreeNode* node) {
     else if (!strcmp(child->name, "MINUS") && !strcmp(child->next->name, "Exp") && child->next->next == NULL) {
         Type body = Exp(child->next);
         if (body->kind != BASIC) {
-            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (对非数字变量取负).\n", child->lineno);
+            fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (对非数字变量取负).\n", child->lineno);
             return NULL;
         } else {
             return body;
@@ -657,7 +656,7 @@ Type Exp (TreeNode* node) {
     else if (!strcmp(child->name, "NOT") && !strcmp(child->next->name, "Exp") && child->next->next == NULL) {
         Type body = Exp(child->next);
         if (body->kind != BASIC || body->u.basic != 0) {
-            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (对非整型变量取非).\n", child->lineno);
+            fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (对非整型变量取非).\n", child->lineno);
             return NULL;
         } else {
             return body;
@@ -673,16 +672,16 @@ Type Exp (TreeNode* node) {
 Type ArithmeticCheck(Type left, Type right, int line) {
     if (left == NULL || right == NULL) return NULL;
     if (left->kind != right->kind) {
-        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (different type).\n", line);
+        fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (different type).\n", line);
         return NULL;
     } else if (left->kind == BASIC) {
         if (left->u.basic == right->u.basic) return left;
         else {
-            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands.\n", line);
+            fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands.\n", line);
             return NULL;
         } 
     } else {
-        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (struct or array).\n", line);
+        fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (struct or array).\n", line);
         return NULL;
     }
 }
@@ -690,18 +689,18 @@ Type ArithmeticCheck(Type left, Type right, int line) {
 Type LogicCheck(Type left, Type right, int line) {
     if (left == NULL || right == NULL) return NULL;
     if (left->kind != right->kind) {
-        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (different type).\n", line);
+        fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (different type).\n", line);
         return NULL;
     }
     else if (left->kind == BASIC) {
         if (left->u.basic == 0 && right->u.basic == 0) {
             return left;
         } else {
-            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (float).\n", line);
+            fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (float).\n", line);
             return NULL;
         }
     } else {
-        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (struct or array).\n", line);
+        fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (struct or array).\n", line);
         return NULL;
     }
 }
@@ -711,7 +710,7 @@ Type AssignOp(Type left, Type right, int line) {
     if (!(typeCmp(left, right))) {
         return left;
     } else {
-        fprintf(stderr, "Error Type 5 at line %d: Type mismatched for assignment.\n", line);
+        fprintf(stderr, "Error type 5 at line %d: Type mismatched for assignment.\n", line);
         return NULL;
     }
 }
