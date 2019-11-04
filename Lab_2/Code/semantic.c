@@ -514,7 +514,7 @@ Type Exp (TreeNode* node) {
                 return info->func->ret;
             } else {
                 // 引用了带参函数
-                fprintf(stderr, "Error Type 9 at Line %d: Arguments not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error Type 9 at Line %d: Arguments are not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
                 return NULL;
             }
         }
@@ -537,7 +537,7 @@ Type Exp (TreeNode* node) {
                 return info->func->ret;
             } else {
                 // 参数列表不匹配
-                fprintf(stderr, "Error Type 9 at Line %d: Arguments not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error Type 9 at Line %d: Arguments are not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
                 return NULL;
             }
         }
@@ -615,7 +615,7 @@ Type Exp (TreeNode* node) {
             if (body == NULL || index == NULL) return NULL;
             if (body->kind != ARRAY) {
                 // printf("child->attr.val_str: %s\n", child->attr.val_str);
-                fprintf(stderr, "Error Type 10 at line %d: before [] is not an array.\n", child->lineno);
+                fprintf(stderr, "Error Type 10 at line %d: The variable before [] is not an array.\n", child->lineno);
                 return NULL;
             }
             if (!(index->kind == BASIC && index->u.basic == 0)) {
