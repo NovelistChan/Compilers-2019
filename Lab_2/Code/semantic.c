@@ -53,7 +53,7 @@ void ExtDecList(TreeNode *node, Type type) {
     info->next = NULL;
     if(temp){
         temp->info->next = info;
-        printf("Error type 3 at Line %d: Redefined variable \"%s\"", child->lineno, varName);
+        fprintf(stderr, "Error type 3 at Line %d: Redefined variable \"%s\".\n", child->lineno, varName);
     }else{
         HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
         hashNode->name = varName;
@@ -103,7 +103,7 @@ Type StructSpecifier(TreeNode *node) {
             type->kind = STRUCTURE;
             type->u.structure = NULL;
             return type;
-            printf("Error type 17 at Line %d: Undefined structure \"%s\"", child->lineno, sname);
+            fprintf(stderr, "Error type 17 at Line %d: Undefined structure \"%s\".\n", child->lineno, sname);
         }
     }else{  /* ******* define ******* */
         char* hashName = "";
@@ -128,7 +128,7 @@ Type StructSpecifier(TreeNode *node) {
             HashNode temp = hashCheck(hashName);
             if(temp){
                 temp->info->next = info;
-                printf("Error type 16 at Line %d: Duplicated name \"%s\"", node->children->next->lineno, hashName);
+                fprintf(stderr, "Error type 16 at Line %d: Duplicated name \"%s\".\n", node->children->next->lineno, hashName);
             }else{
                 HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
                 hashNode->name = hashName;
@@ -211,7 +211,7 @@ void FunDec(TreeNode *node, Type type, bool isDef){
                 if(isDef){
                     // Redefined function
                     if(p->func->ifReal){
-                        printf("Error type 4 at Line %d: Redefined function \"%s\"", child->lineno, funcName);
+                        fprintf(stderr, "Error type 4 at Line %d: Redefined function \"%s\".\n", child->lineno, funcName);
                     }else{
                         p->func->ifReal = true;
                     }
@@ -237,9 +237,9 @@ void FunDec(TreeNode *node, Type type, bool isDef){
             }
             p->next = newInfo;
             if(isDef){
-                    printf("Error type 4 at Line %d: Redefined function \"%s\"", child->lineno, funcName);
+                    fprintf(stderr, "Error type 4 at Line %d: Redefined function \"%s\".\n", child->lineno, funcName);
             }else{
-                    printf("Error type 19 at Line %d: Conflicting declaration and definition of function \"%s\"", child->lineno, funcName);
+                    fprintf(stderr, "Error type 19 at Line %d: Conflicting declaration and definition of function \"%s\".\n", child->lineno, funcName);
             }
         }
     }
@@ -298,7 +298,7 @@ void Stmt(TreeNode *node, Type retType){
     }else if(!strcmp(child->name, "RETURN")){
         child = child->next;    // skip RETURN
         if(typeCmp(retType, Exp(child))){
-            printf("Error type 8 at Line %d: Type mismatched for return.\n", child->lineno);
+            fprintf(stderr, "Error type 8 at Line %d: Type mismatched for return.\n", child->lineno);
             // skip SEMI(";")
         }
     }else if(!strcmp(child->name, "IF")){
@@ -369,7 +369,7 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
             while(temp->tail){
                 if(isFirstError && !strcmp(temp->name, newFieldList->name)){
                     isFirstError = false;
-                    printf("Error type 15 at Line %d: Redefined field \"%s\"", child->lineno, varName);
+                    fprintf(stderr, "Error type 15 at Line %d: Redefined field \"%s\".\n", child->lineno, varName);
                 }
                 temp = temp->tail;
             }
@@ -386,7 +386,7 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
         temp->info->next = info;
         if(isFirstError){
             isFirstError = false;
-            printf("Error type 3 at Line %d: Redefined variable \"%s\"", child->lineno, varName);
+            fprintf(stderr, "Error type 3 at Line %d: Redefined variable \"%s\".\n", child->lineno, varName);
         }
     }else{
         HashNode hashNode = (HashNode)malloc(sizeof(struct HashNode_));
@@ -398,7 +398,7 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
     child = child->next;
     if(child){
         if(isStruct){
-            printf("Error type 15 at Line %d: Field \"%s\" should not be initialized.", node->children->lineno, varName);
+            fprintf(stderr, "Error type 15 at Line %d: Field \"%s\" should not be initialized.\n", node->children->lineno, varName);
         }
         else{
             AssignOp(newType, Exp(child->next), child->lineno);
@@ -446,12 +446,12 @@ Type Exp (TreeNode* node) {
     // Error Type 1 : VARI undefined
     // Exp -> ID
     if (!strcmp(child->name, "ID") && child->next == NULL) {
-       // printf("Exp->ID\n");
+       // fprintf(stderr, "Exp->ID\n");
        //  type = (Type)malloc(sizeof(struct Type_));
         HashNode checkNode = NULL;
         checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
-            printf("Error Type 1 at Line %d: Undefined variable \"%s\"\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error Type 1 at Line %d: Undefined variable \"%s\".\n", child->lineno, child->attr.val_str);
             return NULL;
         } 
         else {
@@ -484,18 +484,18 @@ Type Exp (TreeNode* node) {
         HashNode checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
             // 不在符号表中
-            printf("Error Type 2 at Line %d: Undefined function \"%s\"\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error Type 2 at Line %d: Undefined function \"%s\".\n", child->lineno, child->attr.val_str);
             return NULL;
         } else if (checkInfo(checkNode, FUNC) == NULL) {
             // 在符号表中但是变量
-            printf("Error Type 11 at Line %d: \"%s\" is not a function\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error Type 11 at Line %d: \"%s\" is not a function.\n", child->lineno, child->attr.val_str);
         } else {
             Info info = checkInfo(checkNode, FUNC);
             if (info->func->paramList == NULL) {
                 return info->func->ret;
             } else {
                 // 引用了带参函数
-                printf("Error Type 9 at Line %d: Arguments not applicable for Function \"%s\"\n ", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error Type 9 at Line %d: Arguments not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
                 return NULL;
             }
         }
@@ -505,11 +505,11 @@ Type Exp (TreeNode* node) {
         HashNode checkNode = hashCheck(child->attr.val_str);
         if (checkNode == NULL) {
             // 不在符号表中
-            printf("Error Type 2 at Line %d: Undefined function \"%s\"\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error Type 2 at Line %d: Undefined function \"%s\".\n", child->lineno, child->attr.val_str);
             return NULL;
         } else if (checkInfo(checkNode, FUNC) == NULL){
             // 在符号表中但是变量
-            printf("Error Type 11 at Line %d: \"%s\" is not a function\n", child->lineno, child->attr.val_str);
+            fprintf(stderr, "Error Type 11 at Line %d: \"%s\" is not a function.\n", child->lineno, child->attr.val_str);
         } else {
             Info info = checkInfo(checkNode, FUNC);
             FieldList childParamList = Args(child->next->next);
@@ -518,7 +518,7 @@ Type Exp (TreeNode* node) {
                 return info->func->ret;
             } else {
                 // 参数列表不匹配
-                printf("Error Type 9 at Line %d: Arguments not applicable for Function \"%s\"\n ", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error Type 9 at Line %d: Arguments not applicable for Function \"%s\".\n ", child->lineno, child->attr.val_str);
                 return NULL;
             }
         }
@@ -533,7 +533,7 @@ Type Exp (TreeNode* node) {
             if (!((!strcmp(grandChild->name, "ID") && grandChild->next == NULL) 
             || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "LB") && !strcmp(grandChild->next->next->name, "Exp") && !strcmp(grandChild->next->next->next->name, "RB") && grandChild->next->next->next->next == NULL)
             || (!strcmp(grandChild->name, "Exp") && !strcmp(grandChild->next->name, "DOT") && !strcmp(grandChild->next->next->name, "ID") && grandChild->next->next->next == NULL))) {
-                printf("Error Type 6 at Line %d: Left must be a variable\n", child->lineno);
+                fprintf(stderr, "Error Type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", child->lineno);
                 return NULL;
             }
             return AssignOp(left, right, child->lineno);
@@ -593,11 +593,11 @@ Type Exp (TreeNode* node) {
             Type index = Exp(child->next->next);
             if (body == NULL || index == NULL) return NULL;
             if (body->kind != ARRAY) {
-                printf("Error Type 10 at line %d: \"%s\" is not an array\n", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error Type 10 at line %d: \"%s\" is not an array.\n", child->lineno, child->attr.val_str);
                 return NULL;
             }
             if (!(index->kind == BASIC && index->u.basic == 0)) {
-                printf("Error Type 12 at line %d: \"%s\" is not an integer\n", child->lineno, child->attr.val_str);
+                fprintf(stderr, "Error Type 12 at line %d: \"%s\" is not an integer.\n", child->lineno, child->attr.val_str);
             }
             return body->u.array.elem;
         }
@@ -606,7 +606,7 @@ Type Exp (TreeNode* node) {
             Type body = Exp(child);
             // Type id = Exp(child->next->next);
             if (body->kind != STRUCTURE) {
-                printf("Error Type 13 at line %d: illegal use of '.'\n", child->lineno);
+                fprintf(stderr, "Error Type 13 at line %d: Illegal use of \".\".\n", child->lineno);
                 return NULL;
             }
             FieldList filedList = body->u.structure;
@@ -616,7 +616,7 @@ Type Exp (TreeNode* node) {
                 }
                 filedList = filedList->tail;
             }
-            printf("Error Type 14 at line %d: field undefined\n", child->lineno);
+            fprintf(stderr, "Error Type 14 at line %d: field undefined\n", child->lineno);
             return NULL;
         }
     }
@@ -624,7 +624,7 @@ Type Exp (TreeNode* node) {
     else if (!strcmp(child->name, "MINUS") && !strcmp(child->next->name, "Exp") && child->next->next == NULL) {
         Type body = Exp(child->next);
         if (body->kind != BASIC) {
-            printf("Error Type 7 at line %d: Type mismatched for operands (对非数字变量取负)\n", child->lineno);
+            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (对非数字变量取负).\n", child->lineno);
             return NULL;
         } else {
             return body;
@@ -634,7 +634,7 @@ Type Exp (TreeNode* node) {
     else if (!strcmp(child->name, "NOT") && !strcmp(child->next->name, "Exp") && child->next->next == NULL) {
         Type body = Exp(child->next);
         if (body->kind != BASIC || body->u.basic != 0) {
-            printf("Error Type 7 at line %d: Type mismatched for operands (对非整型变量取非)\n", child->lineno);
+            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (对非整型变量取非).\n", child->lineno);
             return NULL;
         } else {
             return body;
@@ -650,16 +650,16 @@ Type Exp (TreeNode* node) {
 Type ArithmeticCheck(Type left, Type right, int line) {
     if (left == NULL || right == NULL) return NULL;
     if (left->kind != right->kind) {
-        printf("Error Type 7 at line %d: Type mismatched for operands (different type)\n", line);
+        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (different type).\n", line);
         return NULL;
     } else if (left->kind == BASIC) {
         if (left->u.basic == right->u.basic) return left;
         else {
-            printf("Error Type 7 at line %d: Type mismatched for operands \n", line);
+            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands.\n", line);
             return NULL;
         } 
     } else {
-        printf("Error Type 7 at line %d: Type mismatched for operands (struct or array)\n", line);
+        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (struct or array).\n", line);
         return NULL;
     }
 }
@@ -667,18 +667,18 @@ Type ArithmeticCheck(Type left, Type right, int line) {
 Type LogicCheck(Type left, Type right, int line) {
     if (left == NULL || right == NULL) return NULL;
     if (left->kind != right->kind) {
-        printf("Error Type 7 at line %d: Type mismatched for operands (different type)\n", line);
+        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (different type).\n", line);
         return NULL;
     }
     else if (left->kind == BASIC) {
         if (left->u.basic == 0 && right->u.basic == 0) {
             return left;
         } else {
-            printf("Error Type 7 at line %d: Type mismatched for operands (float)\n", line);
+            fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (float).\n", line);
             return NULL;
         }
     } else {
-        printf("Error Type 7 at line %d: Type mismatched for operands (struct or array)\n", line);
+        fprintf(stderr, "Error Type 7 at line %d: Type mismatched for operands (struct or array).\n", line);
         return NULL;
     }
 }
@@ -688,7 +688,7 @@ Type AssignOp(Type left, Type right, int line) {
     if (!(typeCmp(left, right))) {
         return left;
     } else {
-        printf("Error Type 5 at line %d: Type mismatched for assignment\n", line);
+        fprintf(stderr, "Error Type 5 at line %d: Type mismatched for assignment.\n", line);
         return NULL;
     }
 }
