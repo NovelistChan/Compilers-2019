@@ -99,11 +99,11 @@ Type StructSpecifier(TreeNode *node) {
         if(hashNode && hashNode->info->kind==VARI && hashNode->info->type->kind==STRUCTURE){
             return hashNode->info->type;
         }else{
+            fprintf(stderr, "Error type 17 at Line %d: Undefined structure \"%s\".\n", child->lineno, sname);
             Type type = (Type)malloc(sizeof(struct Type_));
             type->kind = STRUCTURE;
             type->u.structure = NULL;
             return type;
-            fprintf(stderr, "Error type 17 at Line %d: Undefined structure \"%s\".\n", child->lineno, sname);
         }
     }else{  /* ******* define ******* */
         char* hashName = "";
