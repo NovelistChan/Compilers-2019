@@ -152,7 +152,7 @@ char* Tag(TreeNode *node){
 char* VarDec(TreeNode *node, Type type){
     TreeNode *child = node->children;
     if(!strcmp(child->name, "ID")){
-        return child->name;
+        return child->attr.val_str;
     }
 
     Type copyType = (Type)malloc(sizeof(struct Type_));
@@ -177,7 +177,7 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     func->decLines = NULL;
 
     child = child->next->next;  // skip LP("(")
-    if(strcmp(child->name, "VarList")){
+    if(!strcmp(child->name, "VarList")){
         func->paramList = VarList(child);
         FieldList p = func->paramList;
         while(p){

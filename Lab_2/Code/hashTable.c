@@ -72,9 +72,9 @@ void insertHashNode(HashNode newNode) {
    newNode->next = NULL;
    HashNode p = hashTable[index]->hashList;
    if (!p) {
-       p = newNode;
+       hashTable[index]->hashList = newNode;
    } else {
-       while (!p->next) {
+       while (!(p->next)) {
            p = p->next;
        }
        p->next = newNode;
