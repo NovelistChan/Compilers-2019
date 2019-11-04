@@ -116,8 +116,11 @@ Type StructSpecifier(TreeNode *node) {
         Type type = (Type)malloc(sizeof(struct Type_));
         type->kind = STRUCTURE;
         type->u.structure = NULL;
+        FieldList tempFieldList = (FieldList)malloc(sizeof(struct FieldList_));
+        tempFieldList->tail = NULL;
         if(!strcmp(child->name, "DefList")){
-            DefList(child, true, type->u.structure);
+            DefList(child, true, tempFieldList);
+            type->u.structure = tempFieldList->tail;
         }
         // skip RC("}")
         if(strcmp(hashName, "")){
@@ -386,7 +389,7 @@ void Dec(TreeNode *node, bool isStruct, FieldList fieldList, Type type){
         }else{
             FieldList temp = fieldList;
             while(temp->tail){
-                if(isFirstError && !strcmp(temp->name, newFieldList->name)){
+                if(isFirstError && !strcmp(temp->tail->name, newFieldList->name)){
                     isFirstError = false;
                     fprintf(stderr, "Error type 15 at Line %d: Redefined field \"%s\".\n", child->lineno, varName);
                 }
@@ -638,7 +641,7 @@ Type Exp (TreeNode* node) {
                 }
                 filedList = filedList->tail;
             }
-            fprintf(stderr, "Error type 14 at line %d: Non-existent filed \"%s\"\n", child->lineno, child->next->next->attr.val_str);
+            fprintf(stderr, "Error type 14 at line %d: Non-existent filed \"%s\".\n", child->lineno, child->next->next->attr.val_str);
             return NULL;
         }
     }
