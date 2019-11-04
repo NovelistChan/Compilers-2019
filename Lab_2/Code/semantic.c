@@ -171,6 +171,7 @@ char* VarDec(TreeNode *node, Type type){
 void FunDec(TreeNode *node, Type type, bool isDef){
     TreeNode *child = node->children;
     char* funcName = child->attr.val_str;
+    HashNode checkNode = hashCheck(funcName);
     Func func = (Func)malloc(sizeof(struct Func_));
     func->ret = type;
     func->paramNum = 0;
@@ -180,14 +181,17 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     func->decLines = NULL;
 
     child = child->next->next;  // skip LP("(")
-    if(!strcmp(child->name, "VarList")){
-        func->paramList = VarList(child);
-        FieldList p = func->paramList;
-        while(p){
-            p = p->tail;
-            func->paramNum ++;
+    if (checkNode == NULL) {
+        if(!strcmp(child->name, "VarList")){
+            func->paramList = VarList(child);
+            FieldList p = func->paramList;
+            while(p){
+                p = p->tail;
+                func->paramNum ++;
+            }
         }
     }
+
     // skip RP(")")
 
     if(!isDef){
@@ -201,7 +205,7 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     newInfo->kind = FUNC;
     newInfo->func = func;
     newInfo->next = NULL;
-    HashNode checkNode = hashCheck(funcName);
+    //HashNode checkNode = hashCheck(funcName);
     if(!checkNode){
         HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
         newNode->name = funcName;
