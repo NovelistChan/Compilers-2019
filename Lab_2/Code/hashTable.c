@@ -41,7 +41,7 @@ HashNode hashCheck(char* name) {
         return NULL;
     } else {
         HashNode p = hashTable[index]->hashList;
-        while (!p) {
+        while (p) {
             if (strcmp(p->name, name) == 0) {
                 return p;
             }
@@ -74,7 +74,7 @@ void insertHashNode(HashNode newNode) {
    if (!p) {
        hashTable[index]->hashList = newNode;
    } else {
-       while (!(p->next)) {
+       while (p->next) {
            p = p->next;
        }
        p->next = newNode;
