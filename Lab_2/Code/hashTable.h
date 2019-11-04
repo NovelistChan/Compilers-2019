@@ -87,5 +87,6 @@ Info checkInfo(HashNode checkNode, NodeType kind);
 int typeCmp(Type t1, Type t2);
 int funcCmp(Func f1, Func f2);
 void printHashTable();
+void checkFunction();   // check declartion of function that hasn't definition
 
 #endif

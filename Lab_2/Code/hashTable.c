@@ -156,3 +156,25 @@ int funcCmp(Func f1, Func f2){
     }
     return 0;
 }
+
+void checkFunction(){
+    HashNode p = NULL;
+    for(int i=0;i<TABLE_SIZE;i++){
+        p = hashTable[i]->hashList;
+        while(p){
+            Info q = p->info;
+            int firstDec = 0;
+            while(q){
+                if(q->kind == FUNC){
+                    if(q->func->ifReal) break;
+                    if(!firstDec && q->func->ifDef) firstDec = q->func->decLines->lineno;
+                }
+                q = q->next;
+            }
+            if(!q && firstDec){
+                fprintf(stderr, "Error type 18 at Line %d: Undefined function \"%s\".\n", firstDec, p->name);
+            }
+            p = p->next;
+        }
+    }
+}

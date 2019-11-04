@@ -2,6 +2,7 @@
 
 void semanticAnalysis() {
     Program(root);
+    checkFunction();
 }
 
 void Program(TreeNode *node) {
