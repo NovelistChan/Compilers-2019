@@ -532,8 +532,8 @@ Type Exp (TreeNode* node) {
         } else {
             Info info = checkInfo(checkNode, FUNC);
             FieldList childParamList = Args(child->next->next);
-            bool matchArgs = checkArgs(childParamList, info->func->paramList);
-            if (matchArgs) {
+            int matchArgs = checkArgs(childParamList, info->func->paramList);
+            if (matchArgs == 0) {
                 return info->func->ret;
             } else {
                 // 参数列表不匹配
