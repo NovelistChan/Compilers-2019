@@ -541,7 +541,8 @@ Type Exp (TreeNode* node) {
                 return NULL;
             }
         }
-    } else if (!strcmp(child->name, "Exp")) {
+    } 
+    else if (!strcmp(child->name, "Exp")) {
         // Exp -> Exp ASSIGNOP Exp
         if (!strcmp(child->next->name, "ASSIGNOP")) {
             Type left = Exp(child);
@@ -608,15 +609,18 @@ Type Exp (TreeNode* node) {
         }
         // Exp -> Exp LB Exp RB
         else if (!strcmp(child->next->name, "LB")) {
+            // printf("child->attr.val_str: %s 11\n", child->attr.val_str);
             Type body = Exp(child);
             Type index = Exp(child->next->next);
             if (body == NULL || index == NULL) return NULL;
             if (body->kind != ARRAY) {
-                fprintf(stderr, "Error Type 10 at line %d: \"%s\" is not an array.\n", child->lineno, child->attr.val_str);
+                // printf("child->attr.val_str: %s\n", child->attr.val_str);
+                fprintf(stderr, "Error Type 10 at line %d: before [] is not an array.\n", child->lineno);
                 return NULL;
             }
             if (!(index->kind == BASIC && index->u.basic == 0)) {
-                fprintf(stderr, "Error Type 12 at line %d: \"%s\" is not an integer.\n", child->lineno, child->attr.val_str);
+                printf("child->next->next->attr.val_str: %s\n", child->next->next->attr.val_str);
+                fprintf(stderr, "Error Type 12 at line %d: in [] is not an integer.\n", child->lineno);
             }
             return body->u.array.elem;
         }
