@@ -103,7 +103,7 @@ int fieldCmp(FieldList f1, FieldList f2) {
     } else if (f1 != NULL && f2 == NULL) {
         return 1;
     } else {
-        if (strcmp(f1->name, f2->name) == 0) {
+        if (!strcmp(f1->name, f2->name) && !typeCmp(f1->type, f2->type)) {
             return fieldCmp(f1->tail, f2->tail);
         } else return 1;
     }
@@ -151,7 +151,7 @@ int funcCmp(Func f1, Func f2){
     if(f1->paramNum != f2->paramNum){
         return 1;
     }
-    if(typeCmp(f1->ret, f2->ret)==0 || fieldCmp(f1->paramList, f2->paramList)){
+    if(typeCmp(f1->ret, f2->ret) || fieldCmp(f1->paramList, f2->paramList)){
         return 1;
     }
     return 0;

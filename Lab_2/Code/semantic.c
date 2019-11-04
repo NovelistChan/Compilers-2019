@@ -171,7 +171,6 @@ char* VarDec(TreeNode *node, Type type){
 void FunDec(TreeNode *node, Type type, bool isDef){
     TreeNode *child = node->children;
     char* funcName = child->attr.val_str;
-    HashNode checkNode = hashCheck(funcName);
     Func func = (Func)malloc(sizeof(struct Func_));
     func->ret = type;
     func->paramNum = 0;
@@ -180,14 +179,50 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     func->ifReal = isDef;
     func->decLines = NULL;
 
+    HashNode checkNode = hashCheck(funcName);
+
     child = child->next->next;  // skip LP("(")
-    if (checkNode == NULL) {
-        if(!strcmp(child->name, "VarList")){
-            func->paramList = VarList(child);
-            FieldList p = func->paramList;
+    if(!strcmp(child->name, "VarList")){
+        func->paramList = VarList(child);
+        FieldList p = func->paramList;
+        while(p){
+            p = p->tail;
+            func->paramNum ++;
+        }
+
+        bool hasInsert = true;
+        if(checkNode){
+            Info temp = checkNode->info;
+            while(temp){
+                if(temp->kind == FUNC && !funcCmp(temp->func, func)){
+                    hasInsert = false;
+                    break;
+                }
+                temp = temp->next;
+            }
+        }
+        if(hasInsert){
+            p = func->paramList;
             while(p){
+                HashNode checkNode = hashCheck(p->name);
+                Info info = (Info)malloc(sizeof(struct Info_));
+                info->kind = VARI;
+                info->type = p->type;
+                info->next = NULL;
+                if(checkNode){
+                    Info temp = checkNode->info;
+                    while(temp->next){
+                        temp = temp->next;
+                    }
+                    temp->next = info;
+                    fprintf(stderr, "Error type 3 at Line %d: Redefined variable \"%s\".\n", child->lineno, p->name);
+                }else{
+                    HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
+                    newNode->name = p->name;
+                    newNode->info = info;
+                    insertHashNode(newNode);
+                }
                 p = p->tail;
-                func->paramNum ++;
             }
         }
     }
@@ -205,7 +240,7 @@ void FunDec(TreeNode *node, Type type, bool isDef){
     newInfo->kind = FUNC;
     newInfo->func = func;
     newInfo->next = NULL;
-    //HashNode checkNode = hashCheck(funcName);
+
     if(!checkNode){
         HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
         newNode->name = funcName;
@@ -272,24 +307,6 @@ FieldList ParamDec(TreeNode *node){
     ret->name = VarDec(child, type);
     ret->type = type;
     ret->tail = NULL;
-    HashNode checkNode = hashCheck(ret->name);
-    Info info = (Info)malloc(sizeof(struct Info_));
-    info->kind = VARI;
-    info->type = type;
-    info->next = NULL;
-    if(checkNode){
-        Info p = checkNode->info;
-        while(p->next){
-            p = p->next;
-        }
-        p->next = info;
-        fprintf(stderr, "Error type 3 at Line %d: Redefined variable \"%s\".\n", child->lineno, ret->name);
-    }else{
-        HashNode newNode = (HashNode)malloc(sizeof(struct HashNode_));
-        newNode->name = ret->name;
-        newNode->info = info;
-        insertHashNode(newNode);
-    }
     return ret;
 }
 
