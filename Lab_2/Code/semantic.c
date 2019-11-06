@@ -283,6 +283,9 @@ void FunDec(TreeNode *node, Type type, bool isDef){
                 }
                 p = p->next;
             }
+            if(p->kind == FUNC && p->func->ifReal){
+                decConflict = false;
+            }
             p->next = newInfo;
             if(isDef){
                 if(decConflict){
@@ -359,7 +362,10 @@ void Stmt(TreeNode *node, Type retType){
         }
     }else if(!strcmp(child->name, "IF")){
         child = child->next->next;  // skip IF and LP
-        Exp(child);
+        Type expType = Exp(child);
+        if(!expType || expType->kind != BASIC || expType->u.basic != 0){
+            fprintf(stderr, "Error type 7 at Line %d: Type mismatched for operamds(The condition in \"if\" must be \"int\").\n", child->lineno);
+        }
         child = child->next->next;  // skip RP
         Stmt(child, retType);
         child = child->next;
@@ -369,7 +375,10 @@ void Stmt(TreeNode *node, Type retType){
         }
     }else{
         child = child->next->next;  // skip WHILE and LP
-        Exp(child);
+        Type expType = Exp(child);
+        if(!expType || expType->kind != BASIC || expType->u.basic != 0){
+            fprintf(stderr, "Error type 7 at Line %d: Type mismatched for operamds(The condition in \"while\" must be \"int\").\n", child->lineno);
+        }
         child = child->next->next;  // skip RP
         Stmt(child, retType);
     }
@@ -613,8 +622,13 @@ Type Exp (TreeNode* node) {
         else if (!strcmp(child->next->name, "RELOP")) {
             Type left = Exp(child);
             Type right = Exp(child->next->next);
-            if (left == NULL) return NULL;
-            return LogicCheck(left, right, child->lineno);
+            if(ArithmeticCheck(left, right, child->lineno)){
+                Type retType = (Type)malloc(sizeof(struct Type_));
+                retType->kind = BASIC;
+                retType->u.basic = 0;
+                return retType;
+            }
+            return NULL;
         }
         // Exp -> Exp PLUS Exp
         else if (!strcmp(child->next->name, "PLUS")) {
@@ -707,7 +721,10 @@ Type Exp (TreeNode* node) {
 }
 
 Type ArithmeticCheck(Type left, Type right, int line) {
-    if (left == NULL || right == NULL) return NULL;
+    if (left == NULL || right == NULL){
+        fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands.\n", line);
+        return NULL;
+    }
     if (left->kind != right->kind) {
         fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (different type).\n", line);
         return NULL;
@@ -724,14 +741,20 @@ Type ArithmeticCheck(Type left, Type right, int line) {
 }
 
 Type LogicCheck(Type left, Type right, int line) {
-    if (left == NULL || right == NULL) return NULL;
+    Type retType = (Type)malloc(sizeof(struct Type_));
+    retType->kind = BASIC;
+    retType->u.basic = 0;
+    if (left == NULL || right == NULL){
+        fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands.\n", line);
+        return NULL;
+    }
     if (left->kind != right->kind) {
         fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (different type).\n", line);
         return NULL;
     }
     else if (left->kind == BASIC) {
         if (left->u.basic == 0 && right->u.basic == 0) {
-            return left;
+            return retType;
         } else {
             fprintf(stderr, "Error type 7 at line %d: Type mismatched for operands (float).\n", line);
             return NULL;
@@ -743,7 +766,10 @@ Type LogicCheck(Type left, Type right, int line) {
 }
 
 Type AssignOp(Type left, Type right, int line) {
-    if (left == NULL || right == NULL) return NULL;
+    if (left == NULL || right == NULL) {
+        fprintf(stderr, "Error type 5 at line %d: Type mismatched for assignment.\n", line);
+        return NULL;
+    }
     if (!(typeCmp(left, right))) {
         return left;
     } else {
