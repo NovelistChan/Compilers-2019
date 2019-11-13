@@ -11,7 +11,8 @@ typedef struct InterCodes_* InterCodes;
 
 typedef enum {
     VARIABLE, FUNCTION,
-    CONSTANT, ADDRESS 
+    CONSTANT, ADDRESS,
+    LABEL, TEMP
 } OpType;
 
 typedef enum {
@@ -52,14 +53,21 @@ struct InterCodes_ {
     InterCodes next;
 };
 
-// 中间代码双相链表
+// 中间代码双向链表
 extern InterCodes head;
 extern InterCodes tail;
 
-void translate_Exp(TreeNode *Node);
+void translate_Exp(TreeNode *node, Operand place);
 Operand new_temp();
-void translate_Stmt(TreeNode* Node);
-void translate_Cond(TreeNode* Node, Operand label_true, Operand label_false);
-void translate_Args(TreeNode* Node, Operand* arg_list);
+Operand new_label();
+void translate_Stmt(TreeNode* node, Operand place);
+void translate_Cond(TreeNode* node, Operand label_true, Operand label_false);
+void translate_Args(TreeNode* node, Operand* arg_list);
+void translate_CompSt(TreeNode* node);
+void translate_StmtList(TreeNode *node);
+void translate_DefList(TreeNode *node);
+void translate_Def(TreeNode *node);
+void translate_DecList(TreeNode *node);
+void translate_Dec(TreeNode *node);
 
 #endif
