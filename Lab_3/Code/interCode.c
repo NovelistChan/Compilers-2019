@@ -7,12 +7,48 @@
 InterCode head = NULL;
 InterCode tail = NULL;
 
-Operand new_label() {
+int tempCnt = 0;
+int labelCnt = 0;
 
+Operand new_label() {
+    Operand label = (Operand)malloc(sizeof(struct Operand_));
+    label->kind = LABEL_OP;
+    label->next = NULL;
+    label->u.var_no = labelCnt;
+    labelCnt++;
 }
 
 Operand new_temp() {
+    Operand temp = (Operand)malloc(sizeof(struct Operand_));
+    temp->kind = TEMP_OP;
+    temp->next = NULL;
+    temp->u.var_no = tempCnt;
+    tempCnt++;
+}
 
+void printCode() {
+
+}
+
+void insertCode(InterCode code) {
+    if (head == NULL) {
+        head = code;
+        tail = code;
+        head->prev = tail;
+        head->next = tail;
+        tail->prev = head;
+        tail->next = head;
+    } else {
+        InterCode p = head;
+        while (p != tail) {
+            p = p->next;
+        }
+        p->next = code;
+        code->prev = p;
+        code->next = head;
+        head->prev = code;
+        tail = code;
+    }
 }
 
 void translate_Exp(TreeNode *node, Operand place) {
@@ -20,7 +56,17 @@ void translate_Exp(TreeNode *node, Operand place) {
     // x := y
     //  INT
     if  (!strcmp(child->name, "INT") && child->next == NULL) {
-
+        Operand op = (Operand)malloc(sizeof(struct Operand_));
+        op->next = CONSTANT;
+        op->next = NULL;
+        op->u.var_no = child->attr.val_int;
+        InterCode code = (InterCode)malloc(sizeof(struct Operand_));
+        code->next = NULL;
+        code->prev = NULL;
+        code->kind = ASSIGN;
+        code->u.assign.left = place;
+        code->u.assign.right = op;
+        insertCode(code);
     }
     // ID
     else if  (!strcmp(child->name, "ID") && child->next == NULL) {
@@ -34,10 +80,30 @@ void translate_Exp(TreeNode *node, Operand place) {
         code->kind = ASSIGN;
         code->u.assign.left = place;
         code->u.assign.right = op;
+        insertCode(code);
     } 
     // Exp1 ASSIGNOP Exp2
     else if  (!strcmp(child->next->name, "ASSIGNOP")) {
-
+        Operand op1 = (Operand)malloc(sizeof(struct Operand_));
+        op1->kind = VARIABLE;
+        op1->next = NULL;
+        op1->u.var_no = child->children->attr.val_str;
+        Operand temp = new_temp();
+        translate_Exp(child->next->next, temp);
+        InterCode code1 = (InterCode)malloc(sizeof(struct InterCode_));
+        code1->next = NULL;
+        code1->prev = NULL;
+        code1->kind = ASSIGN;
+        code1->u.assign.left = op1;
+        code1->u.assign.right = temp;
+        InterCode code2 = (InterCode)malloc(sizeof(struct InterCode_));
+        code2->next = NULL;
+        code2->prev = NULL;
+        code2->kind = ASSIGN;
+        code2->u.assign.left = place;
+        code2->u.assign.right = op1;
+        insertCode(code1);
+        insertCode(code2);
     }
     // Exp1 PLUS Exp2
     else if  (!strcmp(child->next->name, "PLUS")) {

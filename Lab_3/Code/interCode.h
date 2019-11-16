@@ -71,5 +71,7 @@ void translate_DefList(TreeNode *node);
 void translate_Def(TreeNode *node);
 void translate_DecList(TreeNode *node);
 void translate_Dec(TreeNode *node);
+void insertCode(InterCode code);
+void printCode();
 
 #endif
