@@ -44,6 +44,9 @@ struct InterCode_ {
         struct {
             Operand res, op1, op2;
         } binop;
+        struct {
+            Operand label;
+        } dec;
     } u;
     InterCode prev;
     InterCode next;
@@ -74,4 +77,6 @@ void translate_Dec(TreeNode *node);
 void insertCode(InterCode code);
 void printCode();
 
+// 逻辑运算统一处理
+void translate_logical(TreeNode* node, Operand place);
 #endif
