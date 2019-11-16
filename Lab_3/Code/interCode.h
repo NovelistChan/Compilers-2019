@@ -7,12 +7,12 @@
 
 typedef struct Operand_* Operand;
 typedef struct InterCode_* InterCode;
-typedef struct InterCodes_* InterCodes;
+// typedef struct InterCodes_* InterCodes;
 
 typedef enum {
     VARIABLE, FUNCTION,
     CONSTANT, ADDRESS,
-    LABEL, TEMP
+    LABEL_OP, TEMP_OP
 } OpType;
 
 typedef enum {
@@ -35,7 +35,7 @@ struct Operand_ {
     Operand next;
 };
 
-struct InterCode {
+struct InterCode_ {
     ICType kind;
     union{
         struct {
@@ -45,17 +45,19 @@ struct InterCode {
             Operand res, op1, op2;
         } binop;
     } u;
+    InterCode prev;
+    InterCode next;
 };
 
-struct InterCodes_ {
-    InterCode code;
-    InterCodes prev;
-    InterCodes next;
-};
+// struct InterCodes_ {
+//     InterCode code;
+//     InterCodes prev;
+//     InterCodes next;
+// };
 
 // 中间代码双向链表
-extern InterCodes head;
-extern InterCodes tail;
+extern InterCode head;
+extern InterCode tail;
 
 void translate_Exp(TreeNode *node, Operand place);
 Operand new_temp();
