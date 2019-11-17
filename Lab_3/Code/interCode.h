@@ -76,7 +76,7 @@ void translate_DecList(TreeNode *node);
 void translate_Dec(TreeNode *node);
 void insertCode(InterCode code);
 void printCode();
-
+void initial();
 // 逻辑运算统一处理
 void translate_logical(TreeNode* node, Operand place);
 #endif

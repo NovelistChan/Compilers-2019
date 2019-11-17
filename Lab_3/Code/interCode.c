@@ -4,11 +4,16 @@
 #include"stdio.h"
 #include"stdlib.h"
 
-InterCode head = NULL;
-InterCode tail = NULL;
 
 int tempCnt = 0;
 int labelCnt = 0;
+
+void initial() {
+    head = NULL;
+    tail = NULL;
+    tempCnt = 0;
+    labelCnt = 0;
+}
 
 Operand new_label() {
     Operand label = (Operand)malloc(sizeof(struct Operand_));
