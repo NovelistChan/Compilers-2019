@@ -137,6 +137,26 @@ void insertCode(InterCode code) {
     */
 }
 
+int getTypeSize(Type type){
+    if(type->kind == BASIC){
+        return 4;
+    }
+    if(type->kind == ARRAY){
+        return getTypeSize(type->u.array.elem)*type->u.array.size;
+    }
+    if(type->kind == STRUCTURE){
+        int ret = 0;
+        FieldList p = type->u.structure;
+        while(p){
+            ret += getTypeSize(p->type);
+            p = p->tail;
+        }
+        return ret;
+    }
+    fprintf(stderr, "Unexpected error in getTypeSize(), insertCode.c\n");
+    exit(-1);
+}
+
 void translate_logical(TreeNode* node, Operand place) {
     Operand label1 = new_label();
     Operand label2 = new_label();
@@ -297,7 +317,52 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             jointCode(code2, new_twoOp_interCode(CALL, place, funOp));
             return code1;
         }
-    } 
+    }
+    // Exp -> LP Exp RP
+    else if(!strcmp(child->name, "LP")) {
+        return translate_Exp(child->next, place);
+    }
+    // Exp -> Exp LB Exp RB
+    else if(!strcmp(child->next->name, "LB")){
+        // TODO
+    }
+    // Exp -> Exp DOT ID
+    else if(!strcmp(child->next->name, "DOT")){
+        // Exp -> ID ? TODO optimize
+        Operand t1 = new_temp();
+        InterCode code1 = translate_Exp(child, t1);
+        Operand addr1 = new_operand(ADDRESS, "t"+t1->u.var_no);
+
+        TreeNode* p = child->children;
+        while(strcmp(p->name, "ID")){
+            p = p->children;
+        }
+        HashNode checkNode = hashCheck(p->name);
+        Type dstType = NULL;    // the type of STRUCTURE
+        if(checkNode->info->type->kind == ARRAY){
+            dstType = checkNode->info->type->u.array.elem;  // only one-dim array
+        }else{
+            dstType = checkNode->info->type;
+        }
+        int offset = 0;
+        FieldList fieldList = dstType->u.structure;
+        child = child->next->next;
+        char* attrName = child->attr.val_str;
+        while(strcmp(fieldList->name, attrName)){
+            offset += getTypeSize(fieldList->type);
+            fieldList = fieldList->tail;
+        }
+        Operand offsetOp = new_constant(offset);
+        Operand t2 = new_temp();
+        InterCode code2 = new_threeOp_interCode(ADD, t2, addr1, offsetOp);
+        jointCode(code2, new_twoOp_interCode(VAL_2_VAL, place, t2));
+        jointCode(code1, code2);
+        return code1;
+    }
+    else{
+        fprintf(stderr, "Unexpected syntax error occurs in translate_Exp(), interCode.c\n");
+        exit(-1);
+    }
  }
 
 InterCode translate_Stmt(TreeNode* node) {
