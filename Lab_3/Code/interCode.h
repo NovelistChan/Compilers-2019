@@ -29,8 +29,9 @@ typedef enum {
 struct Operand_ {
     OpType kind;
     union {
-        int var_no;
-        char* value;
+        int var_no;     // label and temp
+        int value;      // int constant
+        char* varName;  // variable, function name, address
     } u;
     Operand next;
 };
@@ -39,14 +40,18 @@ struct InterCode_ {
     ICType kind;
     union{
         struct {
+            Operand op;
+        } dec;
+        struct {
             Operand right, left;
         } assign;
         struct {
             Operand res, op1, op2;
         } binop;
         struct {
-            Operand label;
-        } dec;
+            Operand dest, left, right;
+            char* relop;
+        } logic;
     } u;
     InterCode prev;
     InterCode next;
@@ -58,17 +63,27 @@ struct InterCode_ {
 //     InterCodes next;
 // };
 
-// 中间代码双向链表
+// 带头节点的双向循环链表
 extern InterCode head;
-extern InterCode tail;
+//extern InterCode tail;
 
-void translate_Exp(TreeNode *node, Operand place);
 Operand new_temp();
 Operand new_label();
-void translate_Stmt(TreeNode* node, Operand place);
-void translate_Cond(TreeNode* node, Operand label_true, Operand label_false);
-void translate_Args(TreeNode* node, Operand* arg_list);
-void translate_CompSt(TreeNode* node);
+Operand new_constant(int val);
+Operand new_operand(OpType kind, char* name);
+
+InterCode new_oneOp_interCode(ICType kind, Operand op);
+InterCode new_twoOp_interCode(ICType kind, Operand left, Operand right);
+InterCode new_threeOp_interCode(ICType kind, Operand res, Operand op1, Operand op2);
+InterCode new_logic_goto_interCode(Operand left, Operand right, Operand dest, char* relop);
+
+void jointCode(InterCode dst, InterCode src);
+
+InterCode translate_Exp(TreeNode *node, Operand place);
+InterCode translate_Stmt(TreeNode* node);
+InterCode translate_Cond(TreeNode* node, Operand label_true, Operand label_false);
+InterCode translate_Args(TreeNode* node, Operand arg_list);
+InterCode translate_CompSt(TreeNode* node);
 void translate_StmtList(TreeNode *node);
 void translate_DefList(TreeNode *node);
 void translate_Def(TreeNode *node);

@@ -23,6 +23,39 @@ void createHashTable() {
         hashTable[i] = (TableNode)malloc(sizeof(struct TableNode_));
         hashTable[i]->hashList = NULL;
     }
+
+    // type int
+    Type intType = (Type)malloc(sizeof(struct Type_));
+    intType->kind = BASIC;
+    intType->u.basic = 0;
+
+    // insert  int read()
+    HashNode readFuc = createHashNode("read", FUNC);
+    Func readTemp = (Func)malloc(sizeof(struct Func_));
+    readTemp->paramNum = 0;
+    readTemp->ret = intType;
+    readTemp->paramList = NULL;
+    readTemp->ifReal = true;
+    readTemp->ifDef = false;
+    readTemp->decLines = NULL;
+    readFuc->info->func = readTemp;
+    insertHashNode(readFuc);
+
+    // insert  int write(int)
+    HashNode writeFuc = createHashNode("write", FUNC);
+    FieldList writeParam = (FieldList)malloc(sizeof(struct FieldList_));
+    writeParam->name = "";
+    writeParam->type = intType;
+    writeParam->tail = NULL;
+    Func writeTemp = (Func)malloc(sizeof(struct Func_));
+    writeTemp->paramNum = 1;
+    writeTemp->ret = intType;
+    writeTemp->paramList = writeParam;
+    writeTemp->ifReal = true;
+    writeTemp->ifDef = false;
+    writeTemp->decLines = NULL;
+    writeFuc->info->func = writeTemp;
+    insertHashNode(writeFuc);
 }
 
 void printHashTable() {

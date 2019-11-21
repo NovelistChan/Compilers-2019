@@ -1,0 +1,13 @@
+struct A{
+	int a;
+	int b;	
+};
+
+struct B{
+	int c;
+	struct A d;
+};
+
+int main(){
+	struct A sa[10];
+}
