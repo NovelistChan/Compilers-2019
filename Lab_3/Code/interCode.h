@@ -71,6 +71,7 @@ Operand new_temp();
 Operand new_label();
 Operand new_constant(int val);
 Operand new_operand(OpType kind, char* name);
+char* getOperand(Operand op);
 
 InterCode new_oneOp_interCode(ICType kind, Operand op);
 InterCode new_twoOp_interCode(ICType kind, Operand left, Operand right);

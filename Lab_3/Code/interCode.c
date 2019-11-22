@@ -1,8 +1,9 @@
 #include"interCode.h"
 #include"hashTable.h"
 #include"syntaxTree.h"
-#include"stdio.h"
-#include"stdlib.h"
+#include"semantic.h"
+#include<stdio.h>
+#include<stdlib.h>
 #include"interCode.h"
 
 
@@ -56,6 +57,39 @@ Operand new_operand(OpType kind, char* name){
     return op;
 }
 
+char* itoa(unsigned num){
+    char ret[33];
+    int i=0;
+    do{
+        ret[i++] = num%10 + '0';
+        num /= 10;        
+    }while(num);
+    ret[i] = '\0';
+    for(int j=0;j<=(i-1)/2;j++){
+        char temp = ret[j];
+        ret[j] = ret[i-1-j];
+        ret[i-1-j] = temp;
+    }
+    return ret;
+}
+
+char* getOperand(Operand op){
+    switch(op->kind){
+        case VARIABLE: case FUNCTION:{
+            return op->u.varName;
+        }
+        case CONSTANT:{
+            char* num = itoa(op->u.value);
+            char* ret = (char*)malloc(1+sizeof(num));
+            ret[0] = '#';
+            ret[1] = '\0';
+            strcat(ret, num);
+            return ret;
+        }
+        // TODO
+    }
+}
+
 InterCode new_oneOp_interCode(ICType kind, Operand op){
     InterCode oneCode = (InterCode)malloc(sizeof(struct InterCode_));
     oneCode->kind = kind;
@@ -104,7 +138,23 @@ void jointCode(InterCode dst, InterCode src){
 }
 
 void printCode() {
-
+    InterCode p = head->next;
+    while(p != head){
+        switch(p->kind){
+            case LABEL: {
+                printf("LABEL label%d :\n", p->u.dec.op->u.var_no);
+                break;
+            }
+            case FUNCTION:{
+                printf("FUNCTION %s :\n", p->u.dec.op->u.varName);
+                break;
+            }
+            case ASSIGN:{
+                printf("%s ");
+                break;
+            }
+        }
+    }
 }
 
 void insertCode(InterCode code) {
@@ -324,7 +374,24 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp -> Exp LB Exp RB
     else if(!strcmp(child->next->name, "LB")){
-        // TODO
+        Operand t1 = new_temp();
+        InterCode code1 = translate_Exp(child, t1);
+        Operand addr1 = new_operand(ADDRESS, "t"+t1->u.var_no);
+
+        Type dstType = Exp(child);    // the type of ARRAY
+        Operand sizeOp = new_constant(getTypeSize(dstType->u.array.elem));
+        child = child->next->next;
+        Operand t2 = new_temp();
+        InterCode code2 = translate_Exp(child, t2);
+        Operand t3 = new_temp();
+        InterCode code3 = new_threeOp_interCode(MUL, t3, sizeOp, t2);
+        Operand t4 = new_temp();
+        InterCode code4 = new_threeOp_interCode(ADD, t4, addr1, t3);
+        jointCode(code1, code2);
+        jointCode(code2, code3);
+        jointCode(code3, code4);
+        jointCode(code4, new_twoOp_interCode(VAL_2_VAL, place, t4));
+        return code1;
     }
     // Exp -> Exp DOT ID
     else if(!strcmp(child->next->name, "DOT")){
@@ -333,17 +400,8 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         InterCode code1 = translate_Exp(child, t1);
         Operand addr1 = new_operand(ADDRESS, "t"+t1->u.var_no);
 
-        TreeNode* p = child->children;
-        while(strcmp(p->name, "ID")){
-            p = p->children;
-        }
-        HashNode checkNode = hashCheck(p->name);
-        Type dstType = NULL;    // the type of STRUCTURE
-        if(checkNode->info->type->kind == ARRAY){
-            dstType = checkNode->info->type->u.array.elem;  // only one-dim array
-        }else{
-            dstType = checkNode->info->type;
-        }
+        Type dstType = Exp(child);    // the type of STRUCTURE
+
         int offset = 0;
         FieldList fieldList = dstType->u.structure;
         child = child->next->next;
