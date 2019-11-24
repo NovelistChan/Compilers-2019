@@ -432,7 +432,9 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             Operand temp = new_temp();
             InterCode code1 = translate_Exp(child->next->next, temp);
             InterCode code2 = new_twoOp_interCode(ASSIGN, var, temp);
-            jointCode(code2, new_twoOp_interCode(ASSIGN, place, var));
+            if(place){
+                jointCode(code2, new_twoOp_interCode(ASSIGN, place, var));
+            }
             jointCode(code1, code2);
             return code1;
         }else if(!strcmp(child->children->name, "Exp")){
@@ -444,6 +446,9 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             InterCode code3 = new_twoOp_interCode(ASSIGN, leftOp, rightOp);
             jointCode(code1, code2);
             jointCode(code2, code3);
+            if(place){
+                jointCode(code3, new_twoOp_interCode(ASSIGN, place, leftOp));
+            }
             return code1;
         }else{
             fprintf(stderr, "Unexpected syntax error occurs in ASSIGNOP translate_Exp(), interCode.c\n");
