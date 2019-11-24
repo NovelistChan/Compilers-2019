@@ -427,6 +427,17 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     } 
     // Exp1 ASSIGNOP Exp2
     else if  (!strcmp(child->next->name, "ASSIGNOP")) {
+        Operand leftOp = new_temp();
+        InterCode code1 = translate_Exp(child, leftOp);
+        child = child->next->next;
+        Operand rightOp = new_temp();
+        InterCode code2 = translate_Exp(child, rightOp);
+        InterCode code3 = new_twoOp_interCode(ASSIGN, leftOp, rightOp);
+        jointCode(code1, code2);
+        jointCode(code2, code3);
+        return code1;
+
+        /*
         if(!strcmp(child->children->name, "ID")){
             Operand var = new_operand(VARIABLE, child->children->attr.val_str);
             Operand temp = new_temp();
@@ -437,10 +448,12 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             return code1;
         }else if(!strcmp(child->children->name, "Exp")){
             // TODO address use temp!
+
         }else{
             fprintf(stderr, "Unexpected syntax error occurs in ASSIGNOP translate_Exp(), interCode.c\n");
             exit(-1);
-    }
+        }
+        */
     }
     // Exp1 PLUS Exp2
     else if  (!strcmp(child->next->name, "PLUS")) {
