@@ -427,17 +427,6 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     } 
     // Exp1 ASSIGNOP Exp2
     else if  (!strcmp(child->next->name, "ASSIGNOP")) {
-        Operand leftOp = new_temp();
-        InterCode code1 = translate_Exp(child, leftOp);
-        child = child->next->next;
-        Operand rightOp = new_temp();
-        InterCode code2 = translate_Exp(child, rightOp);
-        InterCode code3 = new_twoOp_interCode(ASSIGN, leftOp, rightOp);
-        jointCode(code1, code2);
-        jointCode(code2, code3);
-        return code1;
-
-        /*
         if(!strcmp(child->children->name, "ID")){
             Operand var = new_operand(VARIABLE, child->children->attr.val_str);
             Operand temp = new_temp();
@@ -447,13 +436,19 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             jointCode(code1, code2);
             return code1;
         }else if(!strcmp(child->children->name, "Exp")){
-            // TODO address use temp!
-
+            Operand leftOp = new_temp();
+            InterCode code1 = translate_Exp(child, leftOp);
+            child = child->next->next;
+            Operand rightOp = new_temp();
+            InterCode code2 = translate_Exp(child, rightOp);
+            InterCode code3 = new_twoOp_interCode(ASSIGN, leftOp, rightOp);
+            jointCode(code1, code2);
+            jointCode(code2, code3);
+            return code1;
         }else{
             fprintf(stderr, "Unexpected syntax error occurs in ASSIGNOP translate_Exp(), interCode.c\n");
             exit(-1);
         }
-        */
     }
     // Exp1 PLUS Exp2
     else if  (!strcmp(child->next->name, "PLUS")) {
@@ -591,7 +586,12 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         jointCode(code1, code2);
         jointCode(code2, code3);
         jointCode(code3, code4);
+        /*
+        Operand t5 = new_temp();
         jointCode(code4, new_twoOp_interCode(VAL_2_VAL, place, t4));
+        */
+        place->kind = VARIABLE;
+        place->u.varName = "*t" + t4->u.var_no;
         return code1;
     }
     // Exp -> Exp DOT ID
@@ -614,8 +614,10 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         Operand offsetOp = new_constant(offset);
         Operand t2 = new_temp();
         InterCode code2 = new_threeOp_interCode(ADD, t2, addr1, offsetOp);
-        jointCode(code2, new_twoOp_interCode(VAL_2_VAL, place, t2));
+//        jointCode(code2, new_twoOp_interCode(VAL_2_VAL, place, t2));
         jointCode(code1, code2);
+        place->kind = VARIABLE;
+        place->u.varName = "*t" + t2->u.var_no;
         return code1;
     }
     else{
