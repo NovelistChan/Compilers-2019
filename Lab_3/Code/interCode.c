@@ -15,7 +15,6 @@ void initial() {
     head = NULL;
     tail = NULL;
     */
-
     head = (InterCode)malloc(sizeof(struct InterCode_));
     head->next = head;
     head->prev = head;
@@ -24,7 +23,9 @@ void initial() {
 }
 
 void generateInterCode(){
-    
+    InterCode interCode = translate_Program(root);
+    insertCode(interCode);
+    printCode();
 }
 
 Operand new_label() {
@@ -72,7 +73,7 @@ int intlen(unsigned num){
 
 char* getOperand(Operand op){
     switch(op->kind){
-        case VARIABLE: case FUNCTION:{
+        case VARIABLE: case FUNCNAME:{
             return op->u.varName;
         }
         case CONSTANT:{
@@ -387,7 +388,7 @@ int getTypeSize(Type type){
     exit(-1);
 }
 
-void translate_logical(TreeNode* node, Operand place) {
+InterCode translate_logical(TreeNode* node, Operand place) {
     Operand label1 = new_label();
     Operand label2 = new_label();
     Operand zeroOp = new_constant(0);
@@ -480,19 +481,19 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 RELOP Exp2
     else if  (!strcmp(child->next->name, "RELOP")) {
-       translate_logical(node, place);
+        return translate_logical(node, place);
     }
     // Exp1 AND Exp2
     else if  (!strcmp(child->next->name, "AND")) {
-        translate_logical(node, place);
+        return translate_logical(node, place);
     }
     // Exp1 OR Exp2
     else if  (!strcmp(child->next->name, "OR")) {
-        translate_logical(node, place);
+        return translate_logical(node, place);
     }
     // NOT Exp1
     else if  (!strcmp(child->name, "NOT")) {
-        translate_logical(node, place);
+        return translate_logical(node, place);
     }
     // MINUS Exp1
     else if  (!strcmp(child->name, "MINUS")) {
@@ -507,7 +508,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     // Exp -> ID LP RP
     else if (!strcmp(child->name, "ID") && !strcmp(child->next->name, "LP") && !strcmp(child->next->next->name, "RP")) {
         char* funName = child->attr.val_str;
-        Operand funOp = new_operand(FUNCTION, funName);
+        Operand funOp = new_operand(FUNCNAME, funName);
         if(!strcmp(funName, "read")){
             return new_oneOp_interCode(READ, place);
         }else{
@@ -527,7 +528,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     // Exp -> ID LP Args RP
     else if (!strcmp(child->name, "ID") && !strcmp(child->next->next->name, "Args")) {
         char* funName = child->attr.val_str;
-        Operand funOp = new_operand(FUNCTION, funName);
+        Operand funOp = new_operand(FUNCNAME, funName);
 
         child = child->next->next;  // skip LP
         Operand arg_list = NULL;
@@ -536,7 +537,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             jointCode(code1, new_oneOp_interCode(WRITE, arg_list));
             return code1;
         }else{
-            InterCode p = arg_list;
+            Operand p = arg_list;
             InterCode code2 = new_oneOp_interCode(ARG, p);
             p = p->next;
             while(p){
@@ -747,7 +748,10 @@ InterCode translate_StmtList(TreeNode *node) {
     InterCode retCode = NULL;
     if(child){
         retCode = translate_Stmt(child);
-        jointCode(retCode, translate_StmtList(child->next));
+        child = child->next;
+        if(child){
+            jointCode(retCode, translate_StmtList(child));
+        }
     }
     return retCode;
 }
@@ -757,7 +761,10 @@ InterCode translate_DefList(TreeNode *node) {
     InterCode retCode = NULL;
     if(child){
         retCode = translate_Def(child);
-        jointCode(retCode, translate_DefList(child->next));
+        child = child->next;
+        if(child){
+            jointCode(retCode, translate_DefList(child));
+        }
     }
     return retCode;
 }
@@ -801,4 +808,50 @@ InterCode translate_Dec(TreeNode *node) {
         return NULL;
     }
     return new_dec_interCode(op, getTypeSize(type));
+}
+
+InterCode translate_ExtDef(TreeNode* node){
+    TreeNode* child = node->children->next;
+    InterCode retCode = NULL;
+
+    if(!strcmp(child->name, "FunDec")){
+        retCode = translate_FunDec(child);
+        jointCode(retCode, translate_CompSt(child->next));
+    }else{
+        fprintf(stderr, "There has a unexpected global definition in translate_ExtDef, interCode.c\n");
+        exit(-1);
+    }
+    return retCode;
+}
+
+InterCode translate_FunDec(TreeNode* node){
+    TreeNode* child = node->children;
+    char* funcName = child->attr.val_str;
+    Operand funcOp = new_operand(FUNCNAME, funcName);
+    InterCode code1 = new_oneOp_interCode(FUNCTION, funcOp);
+
+    FieldList p = hashCheck(funcName)->info->func->paramList;
+    while(p){
+        jointCode(code1, new_oneOp_interCode(PARAM, new_operand(VARIABLE, p->name)));
+        p = p->tail;
+    }
+
+    return code1;
+}
+
+InterCode translate_Program(TreeNode* node){
+    return translate_ExtDefList(node->children);
+}
+
+InterCode translate_ExtDefList(TreeNode* node){
+    TreeNode* child = node->children;
+    InterCode retCode = NULL;
+    if(child){
+        retCode = translate_ExtDef(child);
+        child = child->next;
+        if(child){
+            jointCode(retCode, translate_ExtDefList(child->next));
+        }
+    }
+    return retCode;
 }

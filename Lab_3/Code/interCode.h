@@ -10,7 +10,7 @@ typedef struct InterCode_* InterCode;
 // typedef struct InterCodes_* InterCodes;
 
 typedef enum {
-    VARIABLE, FUNCTION,
+    VARIABLE, FUNCNAME,
     CONSTANT, ADDRESS,
     LABEL_OP, TEMP_OP
 } OpType;
@@ -68,7 +68,7 @@ struct InterCode_ {
 // };
 
 // 带头节点的双向循环链表
-extern InterCode head;
+InterCode head;
 //extern InterCode tail;
 
 Operand new_temp();
@@ -87,20 +87,29 @@ void jointCode(InterCode dst, InterCode src);
 
 //TODO encapsulation of translate_Exp(), to reduce the interCode, aim to reduce Exp -> ID || INT
 
-InterCode translate_Exp(TreeNode *node, Operand place);
-InterCode translate_Stmt(TreeNode* node);
-InterCode translate_Cond(TreeNode* node, Operand label_true, Operand label_false);
-InterCode translate_Args(TreeNode* node, Operand arg_list);
+InterCode translate_Program(TreeNode* node);
+InterCode translate_ExtDefList(TreeNode* node);
+InterCode translate_ExtDef(TreeNode* node);
+
+InterCode translate_FunDec(TreeNode* node);
+
 InterCode translate_CompSt(TreeNode* node);
 InterCode translate_StmtList(TreeNode *node);
+InterCode translate_Stmt(TreeNode* node);
+
 InterCode translate_DefList(TreeNode *node);
 InterCode translate_Def(TreeNode *node);
 InterCode translate_DecList(TreeNode *node);
 InterCode translate_Dec(TreeNode *node);
+
+InterCode translate_Exp(TreeNode *node, Operand place);
+InterCode translate_Cond(TreeNode* node, Operand label_true, Operand label_false);
+InterCode translate_Args(TreeNode* node, Operand arg_list);
+
 void insertCode(InterCode code);
 void printCode();
 void initial();
 void generateInterCode();
 // 逻辑运算统一处理
-void translate_logical(TreeNode* node, Operand place);
+InterCode translate_logical(TreeNode* node, Operand place);
 #endif

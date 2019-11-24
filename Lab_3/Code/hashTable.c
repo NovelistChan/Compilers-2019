@@ -4,7 +4,7 @@
 #define TABLE_SIZE 16384
 
 // HashList hashTable[TABLE_SIZE];
-extern TableNode *hashTable = NULL;
+TableNode *hashTable = NULL;
 
 unsigned int hash_pjw(char *name) {
     unsigned int val = 0, i;
@@ -78,6 +78,7 @@ HashNode createHashNode(char *name, NodeType kind) {
     newNode->name = name;
     newInfo->kind = kind;
     newInfo->next = NULL;
+    newNode->info = newInfo;
     newNode->next = NULL;
     return newNode;
 }

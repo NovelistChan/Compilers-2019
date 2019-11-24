@@ -5,6 +5,8 @@ extern void yyrestart();
 extern int yyparse();
 extern void createHashTable();
 extern void semanticAnalysis();
+extern void initial();
+extern void generateInterCode();
 extern bool is_pass;
 
 int main(int argc, char** argv){
@@ -22,6 +24,11 @@ int main(int argc, char** argv){
   if(is_pass){
     createHashTable();
     semanticAnalysis();
+  }
+
+  if(is_pass){
+    initial();
+    generateInterCode();
   }
   return 0;
 }
