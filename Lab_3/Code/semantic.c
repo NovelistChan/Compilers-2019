@@ -494,7 +494,7 @@ int checkArgs(FieldList paramList1, FieldList paramList2) {
    FieldList p1 = paramList1;
    FieldList p2 = paramList2;
     while (p1 != NULL && p2 != NULL) {
-        if (p1->type != p2->type) {
+        if (typeCmp(p1->type, p2->type)) {
             return 1;
         }
         p1 = p1->tail; p2 = p2->tail;

@@ -335,6 +335,7 @@ void printCode() {
                 exit(-1);
             }
         }
+        p = p->next;
     }
 }
 
