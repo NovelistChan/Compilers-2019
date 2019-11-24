@@ -41,7 +41,7 @@ struct InterCode_ {
     union{
         struct {
             Operand op;
-        } dec;
+        } one;
         struct {
             Operand right, left;
         } assign;
@@ -52,6 +52,10 @@ struct InterCode_ {
             Operand dest, left, right;
             char* relop;
         } logic;
+        struct {
+            Operand op;
+            int size;
+        } dec;
     } u;
     InterCode prev;
     InterCode next;
