@@ -726,22 +726,29 @@ InterCode translate_CompSt(TreeNode* node) {
 
 }
 
-void translate_StmtList(TreeNode *node) {
+InterCode translate_StmtList(TreeNode *node) {
+    TreeNode* child = node->children;
+    InterCode retCode = NULL;
+    if(child){
+        retCode = translate_Stmt(child);
+        jointCode(retCode, translate_StmtList(child->next));
+    }
+    return retCode;
+}
+
+InterCode translate_DefList(TreeNode *node) {
 
 }
 
-void translate_DefList(TreeNode *node) {
+InterCode translate_Def(TreeNode *node) {
 
 }
 
-void translate_Def(TreeNode *node) {
+InterCode translate_DecList(TreeNode *node) {
 
 }
 
-void translate_DecList(TreeNode *node) {
-
-}
-
-void translate_Dec(TreeNode *node) {
-
+InterCode translate_Dec(TreeNode *node) {
+    TreeNode* child = node->children;
+    
 }
