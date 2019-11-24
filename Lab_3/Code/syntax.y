@@ -55,7 +55,7 @@ TreeNode* root = NULL;
 
 %%
 /* High-level Definitions  */
-Program : ExtDefList { $$ = createNewNodeNot("Program", @$.first_line); insertNode($$, $1); root = $$; printTree(root, 0);} 
+Program : ExtDefList { $$ = createNewNodeNot("Program", @$.first_line); insertNode($$, $1); root = $$;} 
   ;
 ExtDefList : ExtDef ExtDefList { $$ = createNewNodeNot("ExtDefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }
   | FunDeclaration ExtDefList { $$ = createNewNodeNot("ExtDefList", @$.first_line); insertNode($$, $1); insertNode($$, $2); }

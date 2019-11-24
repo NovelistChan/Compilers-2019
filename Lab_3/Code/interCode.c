@@ -151,12 +151,17 @@ InterCode new_dec_interCode(Operand op, int size){
 }
 
 void jointCode(InterCode dst, InterCode src){
-    InterCode p = dst;
-    while(p->next){
-        p = p->next;
+    if(!dst){
+        dst = src;
     }
-    p->next = src;
-    src->prev = p;
+    else if(src){
+        InterCode p = dst;
+        while(p->next){
+            p = p->next;
+        }
+        p->next = src;
+        src->prev = p;
+    }
 }
 
 void printCode() {
@@ -341,6 +346,7 @@ void printCode() {
 
 void insertCode(InterCode code) {
     head->prev->next = code;
+    code->prev = head->prev;
     InterCode p = code;
     while(p->next != NULL){
         p = p->next;
@@ -499,7 +505,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     // MINUS Exp1
     else if  (!strcmp(child->name, "MINUS")) {
         Operand temp = new_temp();
-        InterCode code1 = translate_Exp(child, temp);
+        InterCode code1 = translate_Exp(child->next, temp);
         Operand zeroOp = new_constant(0);
         zeroOp->u.value = 0;
         InterCode code2 = new_threeOp_interCode(MIN, place, zeroOp, temp);
