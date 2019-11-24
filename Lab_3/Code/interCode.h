@@ -81,8 +81,11 @@ InterCode new_oneOp_interCode(ICType kind, Operand op);
 InterCode new_twoOp_interCode(ICType kind, Operand left, Operand right);
 InterCode new_threeOp_interCode(ICType kind, Operand res, Operand op1, Operand op2);
 InterCode new_logic_goto_interCode(Operand left, Operand right, Operand dest, char* relop);
+InterCode new_dec_interCode(Operand op, int size);
 
 void jointCode(InterCode dst, InterCode src);
+
+//TODO encapsulation of translate_Exp(), to reduce the interCode, aim to reduce Exp -> ID || INT
 
 InterCode translate_Exp(TreeNode *node, Operand place);
 InterCode translate_Stmt(TreeNode* node);
@@ -97,6 +100,7 @@ InterCode translate_Dec(TreeNode *node);
 void insertCode(InterCode code);
 void printCode();
 void initial();
+void generateInterCode();
 // 逻辑运算统一处理
 void translate_logical(TreeNode* node, Operand place);
 #endif

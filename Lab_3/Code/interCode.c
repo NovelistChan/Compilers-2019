@@ -23,6 +23,10 @@ void initial() {
     labelCnt = 0;
 }
 
+void generateInterCode(){
+    
+}
+
 Operand new_label() {
     Operand label = (Operand)malloc(sizeof(struct Operand_));
     label->kind = LABEL_OP;
@@ -134,6 +138,15 @@ InterCode new_logic_goto_interCode(Operand left, Operand right, Operand dest, ch
     logicCode->u.logic.dest = dest;
     logicCode->u.logic.relop = relop;
     return logicCode;
+}
+
+InterCode new_dec_interCode(Operand op, int size){
+    InterCode decCode = (InterCode)malloc(sizeof(struct InterCode_));
+    decCode->kind = DEC;
+    decCode->next = decCode->prev = NULL;
+    decCode->u.dec.op = op;
+    decCode->u.dec.size = size;
+    return decCode;
 }
 
 void jointCode(InterCode dst, InterCode src){
@@ -723,7 +736,10 @@ InterCode translate_Args(TreeNode* node, Operand arg_list) {
 }
 
 InterCode translate_CompSt(TreeNode* node) {
-
+    TreeNode* child = node->children->next;
+    InterCode retCode = translate_DefList(child);
+    jointCode(retCode, translate_StmtList(child->next));
+    return retCode;
 }
 
 InterCode translate_StmtList(TreeNode *node) {
@@ -737,18 +753,52 @@ InterCode translate_StmtList(TreeNode *node) {
 }
 
 InterCode translate_DefList(TreeNode *node) {
-
+    TreeNode* child = node->children;
+    InterCode retCode = NULL;
+    if(child){
+        retCode = translate_Def(child);
+        jointCode(retCode, translate_DefList(child->next));
+    }
+    return retCode;
 }
 
 InterCode translate_Def(TreeNode *node) {
-
+    TreeNode* child = node->children->next;
+    return translate_DecList(child);
 }
 
 InterCode translate_DecList(TreeNode *node) {
+    TreeNode* child = node->children;
 
+    InterCode retCode = translate_Dec(child);
+    child = child->next;
+    if(child){
+        jointCode(retCode, translate_DecList(child->next));
+    }
+    return retCode;
 }
 
 InterCode translate_Dec(TreeNode *node) {
     TreeNode* child = node->children;
-    
+    TreeNode* p = child->children;
+    while(strcmp(p->name, "ID")){
+        p = p->children;
+    }
+    char* varName = p->attr.val_str;
+    Type type = hashCheck(varName)->info->type;
+    Operand op = new_operand(VARIABLE, varName);
+
+    if(type->kind == BASIC){
+        child = child->next;
+        if(child){
+            child = child->next; // skip ASSIGNOP
+            Operand t1 = new_temp();
+            InterCode code1 = translate_Exp(child, t1);
+            InterCode code2 = new_twoOp_interCode(ASSIGN, op, t1);
+            jointCode(code1, code2);
+            return code1;
+        }
+        return NULL;
+    }
+    return new_dec_interCode(op, getTypeSize(type));
 }
