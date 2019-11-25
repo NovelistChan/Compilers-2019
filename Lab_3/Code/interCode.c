@@ -600,7 +600,9 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         Operand t5 = new_temp();
         jointCode(code4, new_twoOp_interCode(VAL_2_VAL, place, t4));
         */
-        place = new_operand(ADDTOVAL, getOperand(t4));
+        place->kind = ADDTOVAL;
+        place->u.varName = getOperand(t4);
+        // place = new_operand(ADDTOVAL, getOperand(t4));
         return code1;
     }
     // Exp -> Exp DOT ID
@@ -625,7 +627,9 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         InterCode code2 = new_threeOp_interCode(ADD, t2, addr1, offsetOp);
 //        jointCode(code2, new_twoOp_interCode(VAL_2_VAL, place, t2));
         jointCode(code1, code2);
-        place = new_operand(ADDTOVAL, getOperand(t2));
+        place->kind = ADDTOVAL;
+        place->u.varName = getOperand(t2);
+        // place = new_operand(ADDTOVAL, getOperand(t2));
         return code1;
     }
     else{
