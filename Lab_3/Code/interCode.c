@@ -370,6 +370,7 @@ void printCode(char* fileName) {
         }
         p = p->next;
     }
+    fclose(fp);
 }
 
 void insertCode(InterCode code) {
