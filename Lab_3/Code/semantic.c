@@ -682,12 +682,12 @@ Type Exp (TreeNode* node) {
                 fprintf(stderr, "Error type 13 at line %d: Illegal use of \".\".\n", child->lineno);
                 return NULL;
             }
-            FieldList filedList = body->u.structure;
-            while (filedList) {
-                if (!strcmp(filedList->name, child->next->next->name)) {
-                    return filedList->type;
+            FieldList fieldList = body->u.structure;
+            while (fieldList) {
+                if (!strcmp(fieldList->name, child->next->next->attr.val_str)) {
+                    return fieldList->type;
                 }
-                filedList = filedList->tail;
+                fieldList = fieldList->tail;
             }
             fprintf(stderr, "Error type 14 at line %d: Non-existent filed \"%s\".\n", child->lineno, child->next->next->attr.val_str);
             return NULL;
