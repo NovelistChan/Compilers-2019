@@ -884,8 +884,10 @@ InterCode translate_ExtDef(TreeNode* node){
         retCode = translate_FunDec(child);
         retCode = jointCode(retCode, translate_CompSt(child->next));
     }else{
+        /*
         fprintf(stderr, "There has a unexpected global definition in translate_ExtDef, interCode.c\n");
         exit(-1);
+        */
     }
     return retCode;
 }
@@ -916,7 +918,7 @@ InterCode translate_ExtDefList(TreeNode* node){
         retCode = translate_ExtDef(child);
         child = child->next;
         if(child){
-            retCode = jointCode(retCode, translate_ExtDefList(child->next));
+            retCode = jointCode(retCode, translate_ExtDefList(child));
         }
     }
     return retCode;
