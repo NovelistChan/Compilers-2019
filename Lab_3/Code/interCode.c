@@ -86,6 +86,11 @@ char* getOperand(Operand op){
             sprintf(ret, "&%s", op->u.varName);
             return ret;
         }
+        case ADDTOVAL:{
+            char* ret = (char*)malloc(1+strlen(op->u.varName)+1);
+            sprintf(ret, "*%s", op->u.varName);
+            return ret;
+        }
         case LABEL_OP:{
             char* ret = (char*)malloc(5+intlen(op->u.var_no)+1);
             sprintf(ret, "label%d", op->u.var_no);
@@ -577,7 +582,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     else if(!strcmp(child->next->name, "LB")){
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
-        Operand addr1 = new_operand(ADDRESS, "t"+t1->u.var_no);
+        Operand addr1 = new_operand(ADDRESS, getOperand(t1));
 
         Type dstType = Exp(child);    // the type of ARRAY
         Operand sizeOp = new_constant(getTypeSize(dstType->u.array.elem));
@@ -595,8 +600,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         Operand t5 = new_temp();
         jointCode(code4, new_twoOp_interCode(VAL_2_VAL, place, t4));
         */
-        place->kind = VARIABLE;
-        place->u.varName = "*t" + t4->u.var_no;
+        place = new_operand(ADDTOVAL, getOperand(t4));
         return code1;
     }
     // Exp -> Exp DOT ID
@@ -604,7 +608,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         // Exp -> ID ? TODO optimize
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
-        Operand addr1 = new_operand(ADDRESS, "t"+t1->u.var_no);
+        Operand addr1 = new_operand(ADDRESS, getOperand(t1));
 
         Type dstType = Exp(child);    // the type of STRUCTURE
 
@@ -621,8 +625,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         InterCode code2 = new_threeOp_interCode(ADD, t2, addr1, offsetOp);
 //        jointCode(code2, new_twoOp_interCode(VAL_2_VAL, place, t2));
         jointCode(code1, code2);
-        place->kind = VARIABLE;
-        place->u.varName = "*t" + t2->u.var_no;
+        place = new_operand(ADDTOVAL, getOperand(t2));
         return code1;
     }
     else{

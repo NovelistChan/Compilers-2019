@@ -12,6 +12,7 @@ typedef struct InterCode_* InterCode;
 typedef enum {
     VARIABLE, FUNCNAME,
     CONSTANT, ADDRESS,
+    ADDTOVAL,
     LABEL_OP, TEMP_OP
 } OpType;
 
