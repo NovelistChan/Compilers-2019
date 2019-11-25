@@ -25,7 +25,6 @@ void initial() {
 void generateInterCode(){
     InterCode interCode = translate_Program(root);
     insertCode(interCode);
-    printCode();
 }
 
 Operand new_label() {
@@ -172,175 +171,196 @@ InterCode jointCode(InterCode dst, InterCode src){
     }
 }
 
-void printCode() {
+void printCode(char* fileName) {
+    FILE* fp = fopen(fileName, "w");
+
     InterCode p = head->next;
     while(p != head){
         switch(p->kind){
             case LABEL: {
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(6+strlen(op)+2+1);
-                sprintf(res, "LABEL %s :", op);
+                //char* res = (char*)malloc(6+strlen(op)+2+1);
+                //sprintf(res, "LABEL %s :", op);
+                fprintf(fp, "LABEL %s :\n", op);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case FUNCTION:{
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(9+strlen(op)+2+1);
-                sprintf(res, "FUNCTION %s :", op);
+                //char* res = (char*)malloc(9+strlen(op)+2+1);
+                //sprintf(res, "FUNCTION %s :", op);
+                fprintf(fp, "FUNCTION %s :\n", op);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case ASSIGN:{
                 char* leftOp = getOperand(p->u.assign.left);
                 char* rightOp = getOperand(p->u.assign.right);
-                char* res = (char*)malloc(strlen(leftOp)+4+strlen(rightOp)+1);
-                sprintf(res, "%s := %s", leftOp, rightOp);
+                //char* res = (char*)malloc(strlen(leftOp)+4+strlen(rightOp)+1);
+                //sprintf(res, "%s := %s", leftOp, rightOp);
+                fprintf(fp, "%s := %s\n", leftOp, rightOp);
                 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case ADD:{
                 char* resOp = getOperand(p->u.binop.res);
                 char* op1 = getOperand(p->u.binop.op1);
                 char* op2 = getOperand(p->u.binop.op2);
-                char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
-                sprintf(res, "%s := %s + %s", resOp, op1, op2);
+                //char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
+                //sprintf(res, "%s := %s + %s", resOp, op1, op2);
+                fprintf(fp, "%s := %s + %s\n", resOp, op1, op2);
                 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case MIN:{
                 char* resOp = getOperand(p->u.binop.res);
                 char* op1 = getOperand(p->u.binop.op1);
                 char* op2 = getOperand(p->u.binop.op2);
-                char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
-                sprintf(res, "%s := %s - %s", resOp, op1, op2);
+                //char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
+                //sprintf(res, "%s := %s - %s", resOp, op1, op2);
+                fprintf(fp, "%s := %s - %s\n", resOp, op1, op2);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case MUL:{
                 char* resOp = getOperand(p->u.binop.res);
                 char* op1 = getOperand(p->u.binop.op1);
                 char* op2 = getOperand(p->u.binop.op2);
-                char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
-                sprintf(res, "%s := %s * %s", resOp, op1, op2);
+                //char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
+                //sprintf(res, "%s := %s * %s", resOp, op1, op2);
+                fprintf(fp, "%s := %s * %s\n", resOp, op1, op2);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case DIV:{
                 char* resOp = getOperand(p->u.binop.res);
                 char* op1 = getOperand(p->u.binop.op1);
                 char* op2 = getOperand(p->u.binop.op2);
-                char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
-                sprintf(res, "%s := %s / %s", resOp, op1, op2);
+                //char* res = (char*)malloc(strlen(resOp)+4+strlen(op1)+3+strlen(op2)+1);
+                //sprintf(res, "%s := %s / %s", resOp, op1, op2);
+                fprintf(fp, "%s := %s / %s\n", resOp, op1, op2);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case ADD_2_VAL:{
                 char* leftOp = getOperand(p->u.assign.left);
                 char* rightOp = getOperand(p->u.assign.right);
-                char* res = (char*)malloc(strlen(leftOp)+5+strlen(rightOp)+1);
-                sprintf(res, "%s := &%s", leftOp, rightOp);
+                //char* res = (char*)malloc(strlen(leftOp)+5+strlen(rightOp)+1);
+                //sprintf(res, "%s := &%s", leftOp, rightOp);
+                fprintf(fp, "%s := &%s\n", leftOp, rightOp);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case VAL_2_VAL:{
                 char* leftOp = getOperand(p->u.assign.left);
                 char* rightOp = getOperand(p->u.assign.right);
-                char* res = (char*)malloc(strlen(leftOp)+5+strlen(rightOp)+1);
-                sprintf(res, "%s := *%s", leftOp, rightOp);
+                //char* res = (char*)malloc(strlen(leftOp)+5+strlen(rightOp)+1);
+                //sprintf(res, "%s := *%s", leftOp, rightOp);
+                fprintf(fp, "%s := *%s\n", leftOp, rightOp);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case VAL_2_ADD:{
                 char* leftOp = getOperand(p->u.assign.left);
                 char* rightOp = getOperand(p->u.assign.right);
-                char* res = (char*)malloc(1+strlen(leftOp)+4+strlen(rightOp)+1);
-                sprintf(res, "*%s := %s", leftOp, rightOp);
+                //char* res = (char*)malloc(1+strlen(leftOp)+4+strlen(rightOp)+1);
+                //sprintf(res, "*%s := %s", leftOp, rightOp);
+                fprintf(fp, "*%s := %s\n", leftOp, rightOp);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case GOTO:{
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(5+strlen(op)+1);
-                sprintf(res, "GOTO %s", op);
+                //char* res = (char*)malloc(5+strlen(op)+1);
+                //sprintf(res, "GOTO %s", op);
+                fprintf(fp, "GOTO %s\n", op);
                 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case IF_GOTO:{
                 char* leftOp = getOperand(p->u.logic.left);
                 char* rightOp = getOperand(p->u.logic.right);
                 char* destOp = getOperand(p->u.logic.dest);
-                char* res = (char*)malloc(3+strlen(leftOp)+1+strlen(p->u.logic.relop)+1+strlen(rightOp)+6+strlen(destOp)+1);
-                sprintf(res, "IF %s %s %s GOTO %s", leftOp, p->u.logic.relop, rightOp, destOp);
+                //char* res = (char*)malloc(3+strlen(leftOp)+1+strlen(p->u.logic.relop)+1+strlen(rightOp)+6+strlen(destOp)+1);
+                //sprintf(res, "IF %s %s %s GOTO %s", leftOp, p->u.logic.relop, rightOp, destOp);
+                fprintf(fp, "IF %s %s %s GOTO %s\n", leftOp, p->u.logic.relop, rightOp, destOp);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case RETURN:{
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(7+strlen(op)+1);
-                sprintf(res, "RETURN %s", op);
+                //char* res = (char*)malloc(7+strlen(op)+1);
+                //sprintf(res, "RETURN %s", op);
+                fprintf(fp, "RETURN %s\n", op);
                 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case DEC:{
                 char* op = getOperand(p->u.dec.op);
-                char* res = (char*)malloc(4+strlen(op)+1+intlen(p->u.dec.size)+1);
-                sprintf(res, "DEC %s %d", op, p->u.dec.size);
+                //char* res = (char*)malloc(4+strlen(op)+1+intlen(p->u.dec.size)+1);
+                //sprintf(res, "DEC %s %d", op, p->u.dec.size);
+                fprintf(fp, "DEC %s %d\n", op, p->u.dec.size);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case ARG:{
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(4+strlen(op)+1);
-                sprintf(res, "ARG %s", op);
+                //char* res = (char*)malloc(4+strlen(op)+1);
+                //sprintf(res, "ARG %s", op);
+                fprintf(fp, "ARG %s\n", op);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case CALL:{
                 char* leftOp = getOperand(p->u.assign.left);
                 char* rightOp = getOperand(p->u.assign.right);
-                char* res = (char*)malloc(strlen(leftOp)+9+strlen(rightOp)+1);
-                sprintf(res, "%s := CALL %s", leftOp, rightOp);
+                //char* res = (char*)malloc(strlen(leftOp)+9+strlen(rightOp)+1);
+                //sprintf(res, "%s := CALL %s", leftOp, rightOp);
+                fprintf(fp, "%s := CALL %s\n", leftOp, rightOp);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case PARAM:{
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(6+strlen(op)+1);
-                sprintf(res, "PARAM %s", op);
+                //char* res = (char*)malloc(6+strlen(op)+1);
+                //sprintf(res, "PARAM %s", op);
+                fprintf(fp, "PARAM %s\n", op);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case READ:{
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(5+strlen(op)+1);
-                sprintf(res, "READ %s", op);
+                //char* res = (char*)malloc(5+strlen(op)+1);
+                //sprintf(res, "READ %s", op);
+                fprintf(fp, "READ %s\n", op);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             case WRITE:{
                 char* op = getOperand(p->u.one.op);
-                char* res = (char*)malloc(6+strlen(op)+1);
-                sprintf(res, "WRITE %s", op);
+                //char* res = (char*)malloc(6+strlen(op)+1);
+                //sprintf(res, "WRITE %s", op);
+                fprintf(fp, "WRITE %s\n", op);
 
-                printf("%s\n", res);
+                //printf("%s\n", res);
                 break;
             }
             default:{

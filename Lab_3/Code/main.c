@@ -7,10 +7,11 @@ extern void createHashTable();
 extern void semanticAnalysis();
 extern void initial();
 extern void generateInterCode();
+extern void printCode(char* fileName);
 extern bool is_pass;
 
 int main(int argc, char** argv){
-  if(argc<=1) return 1;
+  if(argc<=2) return 1;
 
   FILE* f = fopen(argv[1], "r");
   if(!f){
@@ -29,6 +30,7 @@ int main(int argc, char** argv){
   if(is_pass){
     initial();
     generateInterCode();
+    printCode(argv[2]);
   }
   return 0;
 }

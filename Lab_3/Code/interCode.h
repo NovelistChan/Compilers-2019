@@ -108,7 +108,7 @@ InterCode translate_Cond(TreeNode* node, Operand label_true, Operand label_false
 InterCode translate_Args(TreeNode* node, Operand arg_list);
 
 void insertCode(InterCode code);
-void printCode();
+void printCode(char* fileName);
 void initial();
 void generateInterCode();
 // 逻辑运算统一处理
