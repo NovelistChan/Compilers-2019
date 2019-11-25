@@ -84,7 +84,7 @@ InterCode new_threeOp_interCode(ICType kind, Operand res, Operand op1, Operand o
 InterCode new_logic_goto_interCode(Operand left, Operand right, Operand dest, char* relop);
 InterCode new_dec_interCode(Operand op, int size);
 
-void jointCode(InterCode dst, InterCode src);
+InterCode jointCode(InterCode dst, InterCode src);
 
 //TODO encapsulation of translate_Exp(), to reduce the interCode, aim to reduce Exp -> ID || INT
 
