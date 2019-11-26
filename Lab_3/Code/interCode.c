@@ -695,6 +695,11 @@ InterCode translate_Stmt(TreeNode* node) {
     }else if(!strcmp(child->name, "CompSt")){
         return translate_CompSt(child);
     }else if(!strcmp(child->name, "RETURN")){
+        if (!strcmp(child->next->children->name, "INT")) {
+            Operand cons = new_constant(child->next->children->attr.val_int);
+            InterCode code = new_oneOp_interCode(RETURN, cons);
+            return code;
+        }
         child = child->next;    // skip RETURN
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
