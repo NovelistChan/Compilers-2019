@@ -632,11 +632,16 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp -> Exp LB Exp RB
     else if(!strcmp(child->next->name, "LB")){
+        Type dstType = Exp(child);    // the type of ARRAY
+        if(dstType->u.array.elem->kind == ARRAY){
+            fprintf(stderr, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
+            exit(-1);
+        }
+
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
         Operand addr1 = new_operand(ADDRESS, getOperand(t1));
 
-        Type dstType = Exp(child);    // the type of ARRAY
         Operand sizeOp = new_constant(getTypeSize(dstType->u.array.elem));
         child = child->next->next;
         Operand t2 = new_temp();
@@ -656,12 +661,12 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp -> Exp DOT ID
     else if(!strcmp(child->next->name, "DOT")){
-        // Exp -> ID ? TODO optimize
+        Type dstType = Exp(child);    // the type of STRUCTURE
+        
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
         Operand addr1 = new_operand(ADDRESS, getOperand(t1));
 
-        Type dstType = Exp(child);    // the type of STRUCTURE
 
         int offset = 0;
         FieldList fieldList = dstType->u.structure;
