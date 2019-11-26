@@ -448,21 +448,37 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     // x := y
     //  INT
     if  (!strcmp(child->name, "INT") && child->next == NULL) {
+        /*
         Operand cons = new_constant(child->attr.val_int);
         InterCode retCode = NULL;
         if(place){
             retCode = new_twoOp_interCode(ASSIGN, place, cons);
         }
         return retCode;
+        */
+
+        if(place){
+            place->kind = CONSTANT;
+            place->u.value = child->attr.val_int;
+        }
+        return NULL;
     }
     // ID
     else if  (!strcmp(child->name, "ID") && child->next == NULL) {
+        /*
         Operand var = new_operand(VARIABLE, child->attr.val_str);
         InterCode retCode = NULL;
         if(place){
             retCode = new_twoOp_interCode(ASSIGN, place, var);
         }
         return retCode;
+        */
+
+        if(place){
+            place->kind = VARIABLE;
+            place->u.varName = child->attr.val_str;
+        }
+        return NULL;
     } 
     // Exp1 ASSIGNOP Exp2
     else if  (!strcmp(child->next->name, "ASSIGNOP")) {
@@ -496,6 +512,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 PLUS Exp2
     else if  (!strcmp(child->next->name, "PLUS")) {
+        /*
         if (!strcmp(child->children->name, "INT")) {
             Operand cons1 = new_constant(child->children->attr.val_int);
             if(!strcmp(child->next->next->children->name, "INT")) {
@@ -509,14 +526,17 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             code1 = jointCode(code1, code2);
             return code1;
         }
+        */
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
+        /*
         if(!strcmp(child->next->next->children->name, "INT")) {
             Operand cons1 = new_constant(child->next->next->children->attr.val_int);
             InterCode code2 = new_threeOp_interCode(ADD, place, t1, cons1);
             code1 = jointCode(code1, code2);
             return code1;
         }
+        */
         Operand t2 = new_temp();
         InterCode code2 = translate_Exp(child->next->next, t2);
         if(place){
@@ -528,6 +548,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 MINUS Exp2
     else if  (!strcmp(child->next->name, "MINUS")) {
+        /*
         if (!strcmp(child->children->name, "INT")) {
             Operand cons1 = new_constant(child->children->attr.val_int);
             if(!strcmp(child->next->next->children->name, "INT")) {
@@ -541,14 +562,17 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             code1 = jointCode(code1, code2);
             return code1;
         }
+        */
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
+        /*
          if(!strcmp(child->next->next->children->name, "INT")) {
             Operand cons1 = new_constant(child->next->next->children->attr.val_int);
             InterCode code2 = new_threeOp_interCode(MIN, place, t1, cons1);
             code1 = jointCode(code1, code2);
             return code1;
         }
+        */
         Operand t2 = new_temp();
         InterCode code2 = translate_Exp(child->next->next, t2);
         if(place){
@@ -560,6 +584,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 STAR Exp2
     else if  (!strcmp(child->next->name, "STAR")) {
+        /*
          if (!strcmp(child->children->name, "INT")) {
             Operand cons1 = new_constant(child->children->attr.val_int);
             if(!strcmp(child->next->next->children->name, "INT")) {
@@ -573,14 +598,17 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             code1 = jointCode(code1, code2);
             return code1;
         }
+        */
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
+        /*
          if(!strcmp(child->next->next->children->name, "INT")) {
             Operand cons1 = new_constant(child->next->next->children->attr.val_int);
             InterCode code2 = new_threeOp_interCode(MUL, place, t1, cons1);
             code1 = jointCode(code1, code2);
             return code1;
         }
+        */
         Operand t2 = new_temp();
         InterCode code2 = translate_Exp(child->next->next, t2);
         if(place){
@@ -719,7 +747,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     // Exp -> Exp DOT ID
     else if(!strcmp(child->next->name, "DOT")){
         Type dstType = Exp(child);    // the type of STRUCTURE
-        
+
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
         Operand addr1 = new_operand(ADDRESS, getOperand(t1));

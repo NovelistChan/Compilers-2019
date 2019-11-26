@@ -652,7 +652,7 @@ Type Exp (TreeNode* node) {
             return ArithmeticCheck(left, right, child->lineno);
         }
         // Exp -> Exp DIV Exp
-        else if (!strcmp(child->next->name, "DIC")) {
+        else if (!strcmp(child->next->name, "DIV")) {
             Type left = Exp(child);
             Type right = Exp(child->next->next);
             if (left == NULL) return NULL;
