@@ -616,21 +616,17 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 PLUS Exp2
     else if  (!strcmp(child->next->name, "PLUS")) {
-        /*
+        
         if (!strcmp(child->children->name, "INT")) {
-            Operand cons1 = new_constant(child->children->attr.val_int);
             if(!strcmp(child->next->next->children->name, "INT")) {
-                Operand cons2 = new_constant(child->next->next->children->attr.val_int);
-                InterCode code = new_threeOp_interCode(ADD, place, cons1, cons2);
-                return code;
+                if(place) {
+                    place->kind = CONSTANT;
+                    place->u.value = child->children->attr.val_int + child->next->next->children->attr.val_int;
+                    return NULL;
+                }
             }
-            Operand t1 = new_temp();
-            InterCode code1 = translate_Exp(child->next->next, t1);
-            InterCode code2 = new_threeOp_interCode(ADD, place, cons1, t1);
-            code1 = jointCode(code1, code2);
-            return code1;
         }
-        */
+        
         Operand t1 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
         /*
@@ -652,6 +648,15 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 MINUS Exp2
     else if  (!strcmp(child->next->name, "MINUS")) {
+        if (!strcmp(child->children->name, "INT")) {
+            if(!strcmp(child->next->next->children->name, "INT")) {
+                if(place) {
+                    place->kind = CONSTANT;
+                    place->u.value = child->children->attr.val_int - child->next->next->children->attr.val_int;
+                    return NULL;
+                }
+            }
+        }
         /*
         if (!strcmp(child->children->name, "INT")) {
             Operand cons1 = new_constant(child->children->attr.val_int);
@@ -688,6 +693,15 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 STAR Exp2
     else if  (!strcmp(child->next->name, "STAR")) {
+        if (!strcmp(child->children->name, "INT")) {
+            if(!strcmp(child->next->next->children->name, "INT")) {
+                if(place) {
+                    place->kind = CONSTANT;
+                    place->u.value = child->children->attr.val_int * child->next->next->children->attr.val_int;
+                    return NULL;
+                }
+            }
+        }
         /*
          if (!strcmp(child->children->name, "INT")) {
             Operand cons1 = new_constant(child->children->attr.val_int);
@@ -724,6 +738,15 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp1 DIV Exp2
     else if  (!strcmp(child->next->name, "DIV")) {
+        if (!strcmp(child->children->name, "INT")) {
+            if(!strcmp(child->next->next->children->name, "INT")) {
+                if(place) {
+                    place->kind = CONSTANT;
+                    place->u.value = child->children->attr.val_int / child->next->next->children->attr.val_int;
+                    return NULL;
+                }
+            }
+        }
         Operand t1 = new_temp();
         Operand t2 = new_temp();
         InterCode code1 = translate_Exp(child, t1);
