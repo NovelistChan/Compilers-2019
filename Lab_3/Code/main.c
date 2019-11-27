@@ -11,7 +11,10 @@ extern void printCode(char* fileName);
 extern bool is_pass;
 
 int main(int argc, char** argv){
-  if(argc<=2) return 1;
+  if(argc<=2){
+    fprintf(stderr, "Need 2 params.\n");
+    return 1;
+  }
 
   FILE* f = fopen(argv[1], "r");
   if(!f){

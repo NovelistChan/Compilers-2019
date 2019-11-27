@@ -70,6 +70,31 @@ int intlen(unsigned num){
     return n;
 }
 
+bool isParam(char* varName){
+    int i = 0;
+
+    for (; i <TABLE_SIZE; i++) {
+        if (hashTable[i]->hashList != NULL) {
+            HashNode p = hashTable[i]->hashList;
+            while (p) {
+                if(p->info->kind == FUNC){
+                    FieldList q = p->info->func->paramList;
+                    while(q){
+                        if(!strcmp(q->name, varName)){
+                            return true;
+                        }
+                        q = q->tail;
+                    }
+                }
+
+                p = p->next;
+            }
+        }
+    }
+
+    return false;
+}
+
 char* getOperand(Operand op){
     switch(op->kind){
         case VARIABLE: case FUNCNAME:{
@@ -434,15 +459,22 @@ Type getFirstAddress(TreeNode* node, Operand firstName, int* offset, InterCode r
     TreeNode* child = node->children;
     // Exp -> ID
     if(!strcmp(child->name, "ID")&&child->next==NULL){
-        // TODO judge if it needs "&"
         firstName->u.varName = child->attr.val_str;
-        firstName->kind = VARIABLE; // PARAM ID
-        // firstName->kind = ADDRESS;  // DEC ID
+        if(isParam(firstName->u.varName)){
+            firstName->kind = VARIABLE; // PARAM ID
+        }else{
+            firstName->kind = ADDRESS;  // DEC ID
+        }
         *offset = 0;
         return hashCheck(child->attr.val_str)->info->type;
     }
     // Exp -> Exp LB Exp RB
     if(!strcmp(child->next->name, "LB")){
+        if(child->children->next&& !strcmp(child->children->next->name, "LB")){
+            fprintf(stderr, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
+            exit(-1);
+        }
+
         Type arrayType = getFirstAddress(child, firstName, offset, retCode);
         Operand sizeOp = new_constant(getTypeSize(arrayType->u.array.elem));
 
@@ -788,6 +820,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp -> Exp LB Exp RB
     else if(!strcmp(child->next->name, "LB")){
+        /*
         Type dstType = Exp(child);    // the type of ARRAY
         if(dstType->u.array.elem->kind == ARRAY){
             fprintf(stderr, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
@@ -814,6 +847,37 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             place->u.varName = getOperand(t4);
         }
         return code1;
+        */
+
+        Operand t1 = new_temp();
+        int offset = 0;
+        InterCode retCode = (InterCode)malloc(sizeof(struct InterCode_));
+        retCode->next = NULL;
+        getFirstAddress(node, t1, &offset, retCode);
+        retCode = retCode->next;
+        if(offset){
+            Operand offsetOp = new_constant(offset);
+            Operand t2 = new_temp();
+            InterCode code1 = new_threeOp_interCode(ADD, t2, t1, offsetOp);
+            if(place){
+                place->kind = ADDTOVAL;
+                place->u.varName = getOperand(t2);
+            }
+            retCode = jointCode(retCode, code1);
+        }else{
+            if(place){
+                place->kind = ADDTOVAL;
+                if(t1->kind != ADDRESS){
+                    place->u.varName = getOperand(t1);
+                }else{
+                    Operand t2 = new_temp();
+                    InterCode code1 = new_twoOp_interCode(ASSIGN, t2, t1);
+                    place->u.varName = getOperand(t2);
+                    retCode = jointCode(retCode, code1);
+                }
+            }
+        }
+        return retCode;
     }
     // Exp -> Exp DOT ID
     else if(!strcmp(child->next->name, "DOT")){
@@ -1098,6 +1162,10 @@ InterCode translate_Dec(TreeNode *node) {
         }
         return NULL;
     }
+    if(type->kind == ARRAY && type->u.array.elem->kind == ARRAY){
+        fprintf(stderr, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
+        exit(-1);
+    }
     return new_dec_interCode(op, getTypeSize(type));
 }
 
@@ -1113,6 +1181,7 @@ InterCode translate_ExtDef(TreeNode* node){
         fprintf(stderr, "There has a unexpected global definition in translate_ExtDef, interCode.c\n");
         exit(-1);
         */
+        // def of Struct
     }
     return retCode;
 }

@@ -1,25 +1,24 @@
-struct Other
+int add(int temp[2])
 {
-    int o4;
-    int o5;
-};
-
-struct Operands
-{
-    int o1;
-    int o2;
-    struct Other o3;
-};
+    return (temp[0] + temp[1]);
+}
 
 int main()
 {
-    int n;
-    struct Operands op;
-    op.o1 = 1;
-    op.o2 = 2;
-    op.o3.o4 = 3;
-    op.o3.o5 = 4;
-    n = op.o1 + op.o3.o4;
-    write(n);
+    int op[2];
+    int r[1][2];
+    int i = 0, j = 0;
+    while (i < 2)
+    {
+        while (j < 2)
+        {
+            op[j] = i + j;
+            j = j + 1;
+        }
+        r[0][i] = add(op);
+        write(r[0][i]);
+        i = i + 1;
+        j = 0;
+    }
     return 0;
 }

@@ -15,6 +15,9 @@ typedef struct Info_* Info;
 typedef struct HashNode_* HashNode;
 typedef struct TableNode_* TableNode;
 
+#define TABLE_SIZE 16384
+extern TableNode *hashTable;
+
 typedef enum {
     BASIC, ARRAY, STRUCTURE
 } TypeKind;
@@ -33,6 +36,7 @@ struct Type_ {
         // 结构体类型信息是一个链表
         FieldList structure;
     } u;
+    // bool is_param;
 };
 
 struct FieldList_ {
