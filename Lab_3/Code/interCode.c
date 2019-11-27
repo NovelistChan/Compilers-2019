@@ -374,6 +374,8 @@ void printCode(char* fileName) {
 }
 
 void insertCode(InterCode code) {
+    if(!code)   return;
+
     head->prev->next = code;
     code->prev = head->prev;
     InterCode p = code;
@@ -422,6 +424,76 @@ int getTypeSize(Type type){
     }
     fprintf(stderr, "Unexpected error in getTypeSize(), insertCode.c\n");
     exit(-1);
+}
+
+Type getFirstAddress(TreeNode* node, Operand firstName, int* offset, InterCode retCode){
+    if(strcmp(node->name, "Exp")){
+        fprintf(stderr, "Unexpected error node in getExpId(), interCode.c\n");
+        exit(-1);
+    }
+    TreeNode* child = node->children;
+    // Exp -> ID
+    if(!strcmp(child->name, "ID")&&child->next==NULL){
+        // TODO judge if it needs "&"
+        firstName->u.varName = child->attr.val_str;
+        firstName->kind = VARIABLE; // PARAM ID
+        // firstName->kind = ADDRESS;  // DEC ID
+        *offset = 0;
+        return hashCheck(child->attr.val_str)->info->type;
+    }
+    // Exp -> Exp LB Exp RB
+    if(!strcmp(child->next->name, "LB")){
+        Type arrayType = getFirstAddress(child, firstName, offset, retCode);
+        Operand sizeOp = new_constant(getTypeSize(arrayType->u.array.elem));
+
+        child = child->next->next;
+        Operand t1 = new_temp();
+        InterCode code1 = translate_Exp(child, t1);
+        
+        if(t1->kind == CONSTANT){
+            *offset += sizeOp->u.value * t1->u.value;
+            retCode->next = jointCode(retCode->next, code1);
+            return arrayType->u.array.elem;
+        }
+
+        Operand t2 = new_temp();
+        InterCode code2 = new_threeOp_interCode(MUL, t2, sizeOp, t1);
+        Operand t3 = new_temp();
+        InterCode code3 = NULL;
+        if(*offset){
+            Operand offsetOp = new_constant(*offset);
+            code3 = new_threeOp_interCode(ADD, t3, t2, offsetOp);
+            Operand t4 = new_temp();
+            InterCode code4 = new_threeOp_interCode(ADD, t4, firstName, t3);
+            code3 = jointCode(code3, code4);
+            firstName->u.varName = getOperand(t4);
+            *offset = 0;
+        }else{
+            code3 = new_threeOp_interCode(ADD, t3, firstName, t2);
+            firstName->u.varName = getOperand(t3);
+        }
+        firstName->kind = VARIABLE;
+        
+        code2 = jointCode(code2, code3);
+        code1 = jointCode(code1, code2);
+        retCode->next = jointCode(retCode->next, code1);
+        return arrayType->u.array.elem;
+    }
+    // Exp -> Exp DOT ID
+    if(!strcmp(child->next->name, "DOT")){
+        Type arrayType = getFirstAddress(child, firstName, offset, retCode);
+        
+        int off = 0;
+        FieldList fieldList = arrayType->u.structure;
+        child = child->next->next;
+        char* attrName = child->attr.val_str;
+        while(strcmp(fieldList->name, attrName)){
+            off += getTypeSize(fieldList->type);
+            fieldList = fieldList->tail;
+        }
+        *offset += off;
+        return fieldList->type;
+    }
 }
 
 InterCode translate_logical(TreeNode* node, Operand place) {
@@ -696,9 +768,8 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             code1 = jointCode(code1, new_oneOp_interCode(WRITE, arg_list->next));
             return code1;
         }else{
-            Operand p = arg_list;
-            InterCode code2 = new_oneOp_interCode(ARG, p);
-            p = p->next;
+            Operand p = arg_list->next;
+            InterCode code2 = NULL;
             while(p){
                 code2 = jointCode(code2, new_oneOp_interCode(ARG, p));
                 p = p->next;
@@ -746,6 +817,7 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
     }
     // Exp -> Exp DOT ID
     else if(!strcmp(child->next->name, "DOT")){
+        /*
         Type dstType = Exp(child);    // the type of STRUCTURE
 
         Operand t1 = new_temp();
@@ -770,6 +842,37 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
             place->u.varName = getOperand(t2);
         }
         return code1;
+        */
+
+        Operand t1 = new_temp();
+        int offset = 0;
+        InterCode retCode = (InterCode)malloc(sizeof(struct InterCode_));
+        retCode->next = NULL;
+        getFirstAddress(node, t1, &offset, retCode);
+        retCode = retCode->next;
+        if(offset){
+            Operand offsetOp = new_constant(offset);
+            Operand t2 = new_temp();
+            InterCode code1 = new_threeOp_interCode(ADD, t2, t1, offsetOp);
+            if(place){
+                place->kind = ADDTOVAL;
+                place->u.varName = getOperand(t2);
+            }
+            retCode = jointCode(retCode, code1);
+        }else{
+            if(place){
+                place->kind = ADDTOVAL;
+                if(t1->kind != ADDRESS){
+                    place->u.varName = getOperand(t1);
+                }else{
+                    Operand t2 = new_temp();
+                    InterCode code1 = new_twoOp_interCode(ASSIGN, t2, t1);
+                    place->u.varName = getOperand(t2);
+                    retCode = jointCode(retCode, code1);
+                }
+            }
+        }
+        return retCode;
     }
     else{
         fprintf(stderr, "Unexpected syntax error occurs in translate_Exp(), interCode.c\n");
@@ -920,8 +1023,14 @@ InterCode translate_Args(TreeNode* node, Operand arg_list) {
 
 InterCode translate_CompSt(TreeNode* node) {
     TreeNode* child = node->children->next;
-    InterCode retCode = translate_DefList(child);
-    retCode = jointCode(retCode, translate_StmtList(child->next));
+    InterCode retCode = NULL;
+    if(!strcmp(child->name, "DefList")){
+        retCode = translate_DefList(child);
+        child = child->next;
+    }
+    if(!strcmp(child->name, "StmtList")){
+        retCode = jointCode(retCode, translate_StmtList(child));
+    }
     return retCode;
 }
 
@@ -1024,7 +1133,11 @@ InterCode translate_FunDec(TreeNode* node){
 }
 
 InterCode translate_Program(TreeNode* node){
-    return translate_ExtDefList(node->children);
+    TreeNode* child = node->children;
+    if(child){
+        return translate_ExtDefList(child);
+    }
+    return NULL;
 }
 
 InterCode translate_ExtDefList(TreeNode* node){

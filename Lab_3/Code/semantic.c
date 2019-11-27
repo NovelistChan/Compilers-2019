@@ -7,7 +7,9 @@ void semanticAnalysis() {
 
 void Program(TreeNode *node) {
     TreeNode *child = node->children;
-    ExtDefList(child);
+    if(child){
+        ExtDefList(child);
+    }
 }
 
 void ExtDefList(TreeNode *node) {

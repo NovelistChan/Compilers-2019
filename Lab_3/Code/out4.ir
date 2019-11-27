@@ -1,0 +1,14 @@
+FUNCTION main :
+DEC op 16
+*op := #1
+t5 := op + #4
+*t5 := #2
+t9 := op + #8
+*t9 := #3
+t13 := op + #12
+*t13 := #4
+t20 := op + #8
+t15 := *op + *t20
+n := t15
+WRITE n
+RETURN #0

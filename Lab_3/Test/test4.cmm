@@ -1,13 +1,15 @@
+struct Other
+{
+    int o4;
+    int o5;
+};
+
 struct Operands
 {
     int o1;
     int o2;
+    struct Other o3;
 };
-
-int add(struct Operands temp)
-{
-    return (temp.o1 + temp.o2);
-}
 
 int main()
 {
@@ -15,7 +17,9 @@ int main()
     struct Operands op;
     op.o1 = 1;
     op.o2 = 2;
-    n = add(op);
+    op.o3.o4 = 3;
+    op.o3.o5 = 4;
+    n = op.o1 + op.o3.o4;
     write(n);
     return 0;
 }
