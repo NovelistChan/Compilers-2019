@@ -1258,6 +1258,10 @@ InterCode translate_FunDec(TreeNode* node){
 
     FieldList p = hashCheck(funcName)->info->func->paramList;
     while(p){
+        if (p->type->kind == ARRAY) {
+            fprintf(stderr, "Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
+            exit(-1);
+        }
         code1 = jointCode(code1, new_oneOp_interCode(PARAM, new_operand(VARIABLE, p->name)));
         p = p->tail;
     }

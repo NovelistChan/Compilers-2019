@@ -1,0 +1,13 @@
+FUNCTION main :
+a1 := #0
+WRITE a1
+IF #6 > #5 GOTO label0
+GOTO label1
+LABEL label0 :
+a1 := #1
+GOTO label2
+LABEL label1 :
+a1 := #0
+LABEL label2 :
+WRITE a1
+RETURN #0

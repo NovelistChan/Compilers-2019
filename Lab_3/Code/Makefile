@@ -39,8 +39,8 @@ test:
 	./parser ../Test/test3.cmm out3.ir
 #	./parser ../Test/test4.cmm out4.ir
 	./parser ../Test/test5.cmm out5.ir
-#	./parser ../Test/test6.cmm\
-	./parser ../Test/test7.cmm\
+	./parser ../Test/test6.cmm out6.ir
+#	./parser ../Test/test7.cmm\
 	./parser ../Test/test8.cmm\
 	./parser ../Test/test9.cmm\
 	./parser ../Test/test10.cmm\
