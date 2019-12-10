@@ -22,5 +22,7 @@ struct RegDescription_ {
 extern RegDescription reg[32];
 
 int getReg(Operand op);
+void initialRegisters();
+void printObjectCode(InterCode code, char* fileName);
 
 #endif
