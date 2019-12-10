@@ -4,7 +4,6 @@
 #include"semantic.h"
 #include<stdlib.h>
 #include<string.h>
-#include"interCode.h"
 
 
 int tempCnt = 0;
