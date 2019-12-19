@@ -19,7 +19,7 @@ struct RegDescription_ {
     VarDescrition var; // the variable stored
 };
 
-extern RegDescription reg[32];
+RegDescription regs[32];
 
 int getReg(Operand op);
 void initialRegisters();
