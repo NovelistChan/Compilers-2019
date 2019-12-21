@@ -5,23 +5,50 @@
 #include  "interCode.h"
 
 typedef struct RegDescription_ *RegDescription;
-typedef struct VarDescription_ *VarDescrition;
+typedef struct VarDescription_ *VarDescription;
+typedef struct AddressDescription_ *AddressDescription;
 
+typedef enum {
+    REG,
+    MEMORY,
+    STACK
+} AddrType;
+
+struct AddressDescription_{
+    AddrType addrType;
+    union{
+        int regNo;
+        int offset; // offset of stack
+    }addr;
+    AddressDescription next;
+};
+
+struct VarDescription_ {
+    char* varName;
+    AddressDescription addrDescription;
+
+    VarDescription next;
+};
+
+/*
 struct VarDescription_ {
     int regNo; // the reg where the variable stored
     int position; //  the position when used next time
     VarDescrition next;
 };
+*/
 
 struct RegDescription_ {
     char* name; // name of the reg
     bool ifFree; // if is free
-    VarDescrition var; // the variable stored
+    VarDescription var; // the variable stored
 };
 
 RegDescription regs[32];
+VarDescription varHead; // variable list with head node
 
 int getReg(Operand op);
+void initialVarList();
 void initialRegisters();
 void printObjectCode(InterCode code, char* fileName);
 

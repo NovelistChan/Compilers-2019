@@ -8,6 +8,29 @@
 
 int getReg(Operand op) {
     // TODO: 局部寄存器分配算法
+    char* varName = getOperand(op);
+
+    VarDescription p = varHead->next;
+    while(p){
+        if(!strcmp(varName, p->varName)){
+            AddressDescription q = p->addrDescription;
+            while(q){
+                if(q->addrType == REG){
+                    return q->addr.regNo;
+                }
+            }
+            // TODO not in regs
+        }
+    }
+}
+
+void initialVarList(){
+    varHead = (VarDescription)malloc(sizeof(struct VarDescription_));
+    varHead->varName = NULL;
+    varHead->addrDescription = NULL;
+    varHead->next = NULL;
+
+    // TODO initial all variable with their addr
 }
 
 void initialRegisters() {
