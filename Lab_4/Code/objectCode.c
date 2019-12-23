@@ -6,9 +6,14 @@
 #include<string.h>
 #include"objectCode.h"
 
-int getReg(Operand op) {
+int getReg(FILE* fp, Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     // TODO: 局部寄存器分配算法
     char* varName = getOperand(op);
+    for(int i=0;i<32;i++){
+        if(regs[i]->var!=NULL && !strcmp(varName, regs[i]->var->varName)){
+
+        }
+    }
 
     VarDescription p = varHead->next;
     while(p){
@@ -85,79 +90,228 @@ void printObjectCode(InterCode code, char *fileName) {
                 break;
             }
             case ASSIGN:{
-                char* leftOp = getOperand(p->u.assign.left);
-                // TODO
-                if(p->u.assign.right->kind == CONSTANT){
-                    fprintf(fp, "%s := %d\n", leftOp, p->u.assign.right->u.value);
+                int leftNo = -1;
+                if(p->u.assign.left->kind == ADDTOVAL){
+                    if(p->u.assign.right->kind == ADDTOVAL){  // *x = *y
+                        int rightNo = getReg(fp, p->u.assign.right);
+                        Operand t1 = new_temp();
+                        int tempNo = getReg(fp, t1);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[rightNo]->name);
+                        leftNo = getReg(fp, p->u.assign.left);
+                        fprintf(fp, "sw %s, 0(%s)\n", regs[tempNo]->name, regs[leftNo]->name);
+                    }else{  // *x = y
+                        int rightNo = getReg(fp, p->u.assign.right);
+                        leftNo = getReg(fp, p->u.assign.left);
+                        fprintf(fp, "sw %s, 0(%s)\n", regs[rightNo]->name, regs[leftNo]->name);
+                    }
                 }else{
-                    char* rightOp = getOperand(p->u.assign.right);
-                    fprintf(fp, "%s := %s\n", leftOp, rightOp);
+                    if(p->u.assign.right->kind == ADDTOVAL){  // x = *y
+                        int rightNo = getReg(fp, p->u.assign.right);
+                        leftNo = getReg(fp, p->u.assign.left);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[leftNo]->name, regs[rightNo]->name);
+                    }else if(p->u.assign.right->kind == CONSTANT){  // x = #k
+                        leftNo = getReg(fp, p->u.assign.left);
+                        fprintf(fp, "ori %s, $0, %d\n", regs[leftNo]->name, p->u.assign.right->u.value);
+                    }else{  // x = y
+                        int rightNo = getReg(fp, p->u.assign.right);
+                        leftNo = getReg(fp, p->u.assign.left);
+                        fprintf(fp, "addu %s, %s, $0\n", regs[leftNo]->name, regs[rightNo]->name);
+                    }
                 }
                 break;
             }
             case ADD:{
-                char* resOp = getOperand(p->u.binop.res);
-                char* op1 = getOperand(p->u.binop.op1);
-                char* op2 = getOperand(p->u.binop.op2);
-                fprintf(fp, "%s := %s + %s\n", resOp, op1, op2);
+                if(p->u.binop.res->kind == ADDTOVAL){
+                    fprintf(stderr, "Unexpected kind in case ADD, printObjectCode, objectCode.c\n");
+                    exit(-1);
+                }
+
+                int resNo = -1 ,opNo1 = -1, opNo2 = -1;
+
+                if(p->u.binop.op1->kind == CONSTANT){
+                    opNo2 = getReg(fp, p->u.binop.op2);
+                    resNo = getReg(fp, p->u.binop.res);
+                    fprintf(fp, "addi %s, %s, %d\n", regs[resNo]->name, regs[opNo2]->name, p->u.binop.op1->u.value);
+                }else if(p->u.binop.op2->kind == CONSTANT){
+                    opNo1 = getReg(fp, p->u.binop.op1);
+                    resNo = getReg(fp, p->u.binop.res);
+                    fprintf(fp, "addi %s, %s, %d\n", regs[resNo]->name, regs[opNo1]->name, p->u.binop.op2->u.value);
+                }else{
+                    if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
+                        opNo1 = getReg(fp, p->u.binop.op1);
+                        opNo2 = getReg(fp, p->u.binop.op2);
+                    }else{
+                        if(p->u.binop.op1->kind == ADDTOVAL){
+                            opNo1 = getReg(fp, p->u.binop.op1);
+                            Operand t1 = new_temp();
+                            int tempNo = getReg(fp, t1);
+                            fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
+                            opNo1 = tempNo;
+                        } 
+                        if(p->u.binop.op2->kind == ADDTOVAL){
+                            opNo2 = getReg(fp, p->u.binop.op1);
+                            Operand t1 = new_temp();
+                            int tempNo = getReg(fp, t1);
+                            fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
+                            opNo2 = tempNo;
+                        }
+                    }
+                    resNo = getReg(fp, p->u.binop.res);
+                    fprintf(fp, "add %s, %s, %s\n", regs[resNo]->name, regs[opNo1]->name, regs[opNo2]->name);
+                }
                 break;
             }
             case MIN:{
-                char* resOp = getOperand(p->u.binop.res);
-                char* op1 = getOperand(p->u.binop.op1);
-                char* op2 = getOperand(p->u.binop.op2);
-                fprintf(fp, "%s := %s - %s\n", resOp, op1, op2);
+                if(p->u.binop.res->kind == ADDTOVAL){
+                    fprintf(stderr, "Unexpected kind in case MIN, printObjectCode, objectCode.c\n");
+                    exit(-1);
+                }
+
+                int resNo = -1 ,opNo1 = -1, opNo2 = -1;
+
+                if(p->u.binop.op2->kind == CONSTANT){
+                    opNo1 = getReg(fp, p->u.binop.op1);
+                    resNo = getReg(fp, p->u.binop.res);
+                    fprintf(fp, "addi %s, %s, %d\n", regs[resNo]->name, regs[opNo1]->name, -p->u.binop.op2->u.value);
+                }else{
+                    if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
+                        opNo1 = getReg(fp, p->u.binop.op1);
+                        opNo2 = getReg(fp, p->u.binop.op2);
+                    }else{
+                        if(p->u.binop.op1->kind == ADDTOVAL){
+                            opNo1 = getReg(fp, p->u.binop.op1);
+                            Operand t1 = new_temp();
+                            int tempNo = getReg(fp, t1);
+                            fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
+                            opNo1 = tempNo;
+                        } 
+                        if(p->u.binop.op2->kind == ADDTOVAL){
+                            opNo2 = getReg(fp, p->u.binop.op1);
+                            Operand t1 = new_temp();
+                            int tempNo = getReg(fp, t1);
+                            fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
+                            opNo2 = tempNo;
+                        }
+                    }
+                    resNo = getReg(fp, p->u.binop.res);
+                    fprintf(fp, "sub %s, %s, %s\n", regs[resNo]->name, regs[opNo1]->name, regs[opNo2]->name);
+                }
                 break;
             }
             case MUL:{
-                char* resOp = getOperand(p->u.binop.res);
-                char* op1 = getOperand(p->u.binop.op1);
-                char* op2 = getOperand(p->u.binop.op2);
-                fprintf(fp, "%s := %s * %s\n", resOp, op1, op2);
+                if(p->u.binop.res->kind == ADDTOVAL){
+                    fprintf(stderr, "Unexpected kind in case MUL, printObjectCode, objectCode.c\n");
+                    exit(-1);
+                }
+
+                int resNo = -1 ,opNo1 = -1, opNo2 = -1;
+                if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
+                    opNo1 = getReg(fp, p->u.binop.op1);
+                    opNo2 = getReg(fp, p->u.binop.op2);
+                }else{
+                    if(p->u.binop.op1->kind == ADDTOVAL){
+                        opNo1 = getReg(fp, p->u.binop.op1);
+                        Operand t1 = new_temp();
+                        int tempNo = getReg(fp, t1);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
+                        opNo1 = tempNo;
+                    } 
+                    if(p->u.binop.op2->kind == ADDTOVAL){
+                        opNo2 = getReg(fp, p->u.binop.op1);
+                        Operand t1 = new_temp();
+                        int tempNo = getReg(fp, t1);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
+                        opNo2 = tempNo;
+                    }
+                }
+                resNo = getReg(fp, p->u.binop.res);
+                fprintf(fp, "mul %s, %s, %s\n", regs[resNo]->name, regs[opNo1]->name, regs[opNo2]->name);
                 break;
             }
             case DIV:{
-                char* resOp = getOperand(p->u.binop.res);
-                char* op1 = getOperand(p->u.binop.op1);
-                char* op2 = getOperand(p->u.binop.op2);
-                fprintf(fp, "%s := %s / %s\n", resOp, op1, op2);
+                if(p->u.binop.res->kind == ADDTOVAL){
+                    fprintf(stderr, "Unexpected kind in case DIV, printObjectCode, objectCode.c\n");
+                    exit(-1);
+                }
+
+                int resNo = -1 ,opNo1 = -1, opNo2 = -1;
+                if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
+                    opNo1 = getReg(fp, p->u.binop.op1);
+                    opNo2 = getReg(fp, p->u.binop.op2);
+                }else{
+                    if(p->u.binop.op1->kind == ADDTOVAL){
+                        opNo1 = getReg(fp, p->u.binop.op1);
+                        Operand t1 = new_temp();
+                        int tempNo = getReg(fp, t1);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
+                        opNo1 = tempNo;
+                    } 
+                    if(p->u.binop.op2->kind == ADDTOVAL){
+                        opNo2 = getReg(fp, p->u.binop.op1);
+                        Operand t1 = new_temp();
+                        int tempNo = getReg(fp, t1);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
+                        opNo2 = tempNo;
+                    }
+                }
+                resNo = getReg(fp, p->u.binop.res);
+
+                fprintf(fp, "div %s, %s\n", regs[opNo1]->name, regs[opNo2]->name);
+                fprintf(fp, "mflo %s\n", regs[resNo]->name);
                 break;
             }
             case ADD_2_VAL:{
-                char* leftOp = getOperand(p->u.assign.left);
-                char* rightOp = getOperand(p->u.assign.right);
-                fprintf(fp, "%s := &%s\n", leftOp, rightOp);
+                int leftOp = getReg(fp, p->u.assign.left);
+                fprintf(fp, "lui %s, %s\n", regs[leftOp]->name, getOperand(p->u.assign.right));
                 break;
             }
             case VAL_2_VAL:{
-                char* leftOp = getOperand(p->u.assign.left);
-                char* rightOp = getOperand(p->u.assign.right);
-                fprintf(fp, "%s := *%s\n", leftOp, rightOp);
+                int leftOp = getReg(fp, p->u.assign.left);
+                int rightOp = getReg(fp, p->u.assign.right);
+                fprintf(fp, "lw %s, 0(%s)\n", regs[leftOp]->name, regs[rightOp]->name);
                 break;
             }
             case VAL_2_ADD:{
-                char* leftOp = getOperand(p->u.assign.left);
-                char* rightOp = getOperand(p->u.assign.right);
-                fprintf(fp, "*%s := %s\n", leftOp, rightOp);
+                int leftOp = getReg(fp, p->u.assign.left);
+                int rightOp = getReg(fp, p->u.assign.right);
+                fprintf(fp, "sw %s, 0(%s)\n", regs[rightOp]->name, regs[leftOp]->name);
                 break;
             }
             case GOTO:{
                 char* op = getOperand(p->u.one.op);
-                fprintf(fp, "GOTO %s\n", op);
+                fprintf(fp, "j %s\n", op);
                 break;
             }
             case IF_GOTO:{
-                char* leftOp = getOperand(p->u.logic.left);
-                char* rightOp = getOperand(p->u.logic.right);
                 char* destOp = getOperand(p->u.logic.dest);
-                fprintf(fp, "IF %s %s %s GOTO %s\n", leftOp, p->u.logic.relop, rightOp, destOp);
+                char* relop = p->u.logic.relop;
+                int leftOp = getReg(fp, p->u.logic.left);
+                int rightOp = getReg(fp, p->u.assign.right);
+                // fprintf(fp, "IF %s %s %s GOTO %s\n", leftOp, p->u.logic.relop, rightOp, destOp);
+                if(!strcmp(relop, "==")){
+                    fprintf(fp, "beq %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                }else if(!strcmp(relop, "!=")){
+                    fprintf(fp, "bne %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                }else if(!strcmp(relop, ">")){
+                    fprintf(fp, "bgt %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                }else if(!strcmp(relop, "<")){
+                    fprintf(fp, "blt %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                }else if(!strcmp(relop, ">=")){
+                    fprintf(fp, "bge %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                }else if(!strcmp(relop, "<=")){
+                    fprintf(fp, "ble %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                }else{
+                    fprintf(stderr, "Unexpected relop in printObjectCode in objectCode.c\n");
+                }
                 break;
             }
             case RETURN:{
-                char* op = getOperand(p->u.one.op);
-                fprintf(fp, "RETURN %s\n", op);
+                int retOp = getReg(fp, p->u.one.op);
+                fprintf(fp, "move $v0, %s\n", regs[retOp]->name);
+                fprintf(fp, "jr $ra");
                 break;
             }
+            // TODO
             case DEC:{
                 char* op = getOperand(p->u.dec.op);
                 fprintf(fp, "DEC %s %d\n", op, p->u.dec.size);

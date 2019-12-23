@@ -920,13 +920,27 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         retCode = retCode->next;
         if(offset){
             Operand offsetOp = new_constant(offset);
-            Operand t2 = new_temp();
-            InterCode code1 = new_threeOp_interCode(ADD, t2, t1, offsetOp);
-            if(place){
-                place->kind = ADDTOVAL;
-                place->u.varName = getOperand(t2);
+            if(t1->kind == ADDRESS){
+                Operand t2 = new_temp();
+                t1->kind = VARIABLE;
+                InterCode code1 = new_twoOp_interCode(ADD_2_VAL, t2, t1);
+                Operand t3 = new_temp();
+                InterCode code2 = new_threeOp_interCode(ADD, t3, t2, offsetOp);
+                code1 = jointCode(code1, code2);
+                retCode = jointCode(retCode, code1);
+                if(place){
+                    place->kind = ADDTOVAL;
+                    place->u.varName = getOperand(t3);
+                }
+            }else{
+                Operand t2 = new_temp();
+                InterCode code1 = new_threeOp_interCode(ADD, t2, t1, offsetOp);
+                retCode = jointCode(retCode, code1);
+                if(place){
+                    place->kind = ADDTOVAL;
+                    place->u.varName = getOperand(t2);
+                }
             }
-            retCode = jointCode(retCode, code1);
         }else{
             if(place){
                 place->kind = ADDTOVAL;
@@ -934,7 +948,8 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
                     place->u.varName = getOperand(t1);
                 }else{
                     Operand t2 = new_temp();
-                    InterCode code1 = new_twoOp_interCode(ASSIGN, t2, t1);
+                    t1->kind = VARIABLE;
+                    InterCode code1 = new_twoOp_interCode(ADD_2_VAL, t2, t1);
                     place->u.varName = getOperand(t2);
                     retCode = jointCode(retCode, code1);
                 }
@@ -979,13 +994,28 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
         retCode = retCode->next;
         if(offset){
             Operand offsetOp = new_constant(offset);
-            Operand t2 = new_temp();
-            InterCode code1 = new_threeOp_interCode(ADD, t2, t1, offsetOp);
-            if(place){
-                place->kind = ADDTOVAL;
-                place->u.varName = getOperand(t2);
+
+            if(t1->kind == ADDRESS){
+                Operand t2 = new_temp();
+                t1->kind = VARIABLE;
+                InterCode code1 = new_twoOp_interCode(ADD_2_VAL, t2, t1);
+                Operand t3 = new_temp();
+                InterCode code2 = new_threeOp_interCode(ADD, t3, t2, offsetOp);
+                code1 = jointCode(code1, code2);
+                retCode = jointCode(retCode, code1);
+                if(place){
+                    place->kind = ADDTOVAL;
+                    place->u.varName = getOperand(t3);
+                }
+            }else{
+                Operand t2 = new_temp();
+                InterCode code1 = new_threeOp_interCode(ADD, t2, t1, offsetOp);
+                retCode = jointCode(retCode, code1);
+                if(place){
+                    place->kind = ADDTOVAL;
+                    place->u.varName = getOperand(t2);
+                }
             }
-            retCode = jointCode(retCode, code1);
         }else{
             if(place){
                 place->kind = ADDTOVAL;
@@ -993,7 +1023,8 @@ InterCode translate_Exp(TreeNode *node, Operand place) {
                     place->u.varName = getOperand(t1);
                 }else{
                     Operand t2 = new_temp();
-                    InterCode code1 = new_twoOp_interCode(ASSIGN, t2, t1);
+                    t1->kind = VARIABLE;
+                    InterCode code1 = new_twoOp_interCode(ADD_2_VAL, t2, t1);
                     place->u.varName = getOperand(t2);
                     retCode = jointCode(retCode, code1);
                 }

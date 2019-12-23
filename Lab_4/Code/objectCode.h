@@ -47,7 +47,7 @@ struct RegDescription_ {
 RegDescription regs[32];
 VarDescription varHead; // variable list with head node
 
-int getReg(Operand op);
+int getReg(FILE* fp, Operand op);
 void initialVarList();
 void initialRegisters();
 void printObjectCode(InterCode code, char* fileName);

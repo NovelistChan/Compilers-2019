@@ -86,8 +86,6 @@ InterCode new_dec_interCode(Operand op, int size);
 
 InterCode jointCode(InterCode dst, InterCode src);
 
-//TODO encapsulation of translate_Exp(), to reduce the interCode, aim to reduce Exp -> ID || INT
-
 InterCode translate_Program(TreeNode* node);
 InterCode translate_ExtDefList(TreeNode* node);
 InterCode translate_ExtDef(TreeNode* node);
