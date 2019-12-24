@@ -65,7 +65,8 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         regs[regNo]->ifFree = false;
         regs[regNo]->dirty = 0;
         regs[regNo]->var = var;
-        fprintf(fp, "lw %s, %s\n", regs[regNo]->name, getOperand(op));
+        if (op->kind == CONSTANT)
+            fprintf(fp, "li %s, %s\n", regs[regNo]->name, getOperand(op));
         var->next = varHead;
         varHead = var;
         return regNo;
