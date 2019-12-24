@@ -78,6 +78,8 @@ Operand new_constant(int val);
 Operand new_operand(OpType kind, char* name);
 char* getOperand(Operand op);
 
+int getTypeSize(Type type);
+
 InterCode new_oneOp_interCode(ICType kind, Operand op);
 InterCode new_twoOp_interCode(ICType kind, Operand left, Operand right);
 InterCode new_threeOp_interCode(ICType kind, Operand res, Operand op1, Operand op2);

@@ -10,87 +10,81 @@ int resRet = 0;
 
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     // TODO: 局部寄存器分配算法
-     VarDescription var = varHead;
-    while (var != NULL) {
-        char *varName = getOperand(op);
-        if ((op->kind == TEMP_OP || op->kind == VARIABLE) && !strcmp(varName, var->varName))
-            break;
-        var = var->next;
-    }
-
-    if (var != NULL) { // in varHead
-        AddressDescription addr = var->addrDescription;
-        while (addr != NULL) {
-            if (addr->addrType == REG) 
-                return addr->addr.regNo;
-            addr = addr->next;
-        }
-        // return var->addrDescription->addr.regNo;
-    }
-    else { // a new var
-        var = (VarDescription)malloc(sizeof(struct VarDescription_));
-        var->varName = getOperand(op);
-        var->addrDescription = (AddressDescription)malloc(sizeof(struct AddressDescription_));
-        var->addrDescription->addrType = REG;
-        var->addrDescription->next = NULL;
-       // var->addrDescription->addr.regNo = allocate();
-        int regNo = -1;
-        for (int i = 8; i <= 25; i++) {// t0~t9 s0~s8
-            if (regs[i]->ifFree) {
-                regNo = i;
-               
-                break;
-            }
-        }
-        if (regNo == -1) {// all regs in use
-            int farthest = -99999;
-            for (int i = 8; i <= 25; i++) {
-                if (!regs[i]->ifFree) {
-                    regs[i]->dirty++;
-                    farthest = farthest > regs[i]->dirty ? farthest:regs[i]->dirty;
-                }
-            }
-            for (int i = 8; i <= 25; i++) {
-                if (!regs[i]->ifFree) {
-                    if (regs[i]->dirty == farthest) {
-                        regNo = i;
-                        break;
-                    }
-                }
-            }
-            // var->addrDescription->addr.regNo = regNo;
-
-        }
-        var->addrDescription->addr.regNo = regNo;
-        regs[regNo]->ifFree = false;
-        regs[regNo]->dirty = 0;
-        regs[regNo]->var = var;
-        if (op->kind == CONSTANT)
-            fprintf(fp, "li %s, %s\n", regs[regNo]->name, getOperand(op));
-        var->next = varHead;
-        varHead = var;
-        return regNo;
-    }
-    /*
-    char* varName = (char*)malloc(33);
-    if(op->kind == TEMP_OP){
+    char* varName = NULL;
+    if(op->kind == TEMP_OP || op->kind == CONSTANT){
         varName = getOperand(op);
-    }else if(op->kind == CONSTANT){
-        sprintf(varName, "%d", op->u.value);
     }else if(op->kind == VARIABLE || op->kind == ADDRESS || op->kind == ADDTOVAL){
         varName = op->u.varName;
     }else{
         fprintf(stderr, "Unexpected kind error in getReg(), objectCode.c\n");
         exit(-1);
     }
-    
-    for(int i=0;i<32;i++){
-        if(regs[i]->var!=NULL && !strcmp(varName, regs[i]->var->varName)){
-            return i;
+
+    VarDescription var = varHead->next;
+    while (var != NULL) {
+        if (!strcmp(varName, var->varName))
+            break;
+        var = var->next;
+    }
+
+    AddressDescription addr = var->addrDescription;
+    if (var != NULL) { // in varHead
+        while (addr != NULL) {
+            if (addr->addrType == REG) 
+                return addr->addr.regNo;
+            addr = addr->next;
         }
     }
-    */
-    return resRet++;
+
+    AddressDescription newAddr = (AddressDescription)malloc(sizeof(struct AddressDescription_));
+    newAddr->next = NULL;
+    newAddr->addrType = REG;
+    int regNo = -1;
+    for (int i = 8; i <= 25; i++) {// t0~t9 s0~s8
+        if (regs[i]->ifFree) {
+            regNo = i;
+            break;
+        }
+    }
+    if (regNo == -1) {// all regs in use
+        int farthest = -99999;
+        for (int i = 8; i <= 25; i++) {
+            if (!regs[i]->ifFree) {
+                regs[i]->dirty++;
+                farthest = farthest > regs[i]->dirty ? farthest:regs[i]->dirty;
+            }
+        }
+        for (int i = 8; i <= 25; i++) {
+            if (!regs[i]->ifFree) {
+                if (regs[i]->dirty == farthest) {
+                    regNo = i;
+                    break;
+                }
+            }
+        }
+    }
+    newAddr->addr.regNo = regNo;
+    regs[regNo]->ifFree = false;
+    regs[regNo]->dirty = 0;
+    regs[regNo]->var = var;
+    if (op->kind == CONSTANT)
+        fprintf(fp, "ori %s, $0, %d\n", regs[regNo]->name, op->u.value);
+    else{
+        fprintf(fp, "lui %s, %s\n", regs[regNo]->name, varName);
+    }
+
+    if(var != NULL){
+        // TODO load var to a reg and add a AddressDescription
+        addr->next = newAddr;
+    }else { // a new var
+        var = (VarDescription)malloc(sizeof(struct VarDescription_));
+        var->varName = varName;
+        var->addrDescription = newAddr;
+        
+        var->next = varHead->next;
+        varHead->next = var;
+    }
+    return regNo;
 }
 
 void initialVarList(){
@@ -100,7 +94,19 @@ void initialVarList(){
     varHead->next = NULL;
 
     // TODO initial all variable with their addr
+    for(int i=0;i<TABLE_SIZE;i++){
+        HashNode p = hashTable[i]->hashList;
+        while(p){
+            if(p->info->kind == VARI){
+                if(p->info->type->kind == ARRAY || p->info->type->kind == STRUCTURE){
+                    fprintf(fp, "%s: .space %d\n", p->name, getTypeSize(p->info->type));
+                }
+            }
+            p = p->next;
+        }
+    }
 
+    fprintf(fp, ".globl main\n");
 }
 
 void initialRegisters() {
