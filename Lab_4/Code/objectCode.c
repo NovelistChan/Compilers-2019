@@ -10,6 +10,66 @@ int resRet = 0;
 
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     // TODO: 局部寄存器分配算法
+     VarDescription var = varHead;
+    while (var != NULL) {
+        char *varName = getOperand(op);
+        if ((op->kind == TEMP_OP || op->kind == VARIABLE) && !strcmp(varName, var->varName))
+            break;
+        var = var->next;
+    }
+
+    if (var != NULL) { // in varHead
+        AddressDescription addr = var->addrDescription;
+        while (addr != NULL) {
+            if (addr->addrType == REG) 
+                return addr->addr.regNo;
+            addr = addr->next;
+        }
+        // return var->addrDescription->addr.regNo;
+    }
+    else { // a new var
+        var = (VarDescription)malloc(sizeof(struct VarDescription_));
+        var->varName = getOperand(op);
+        var->addrDescription = (AddressDescription)malloc(sizeof(struct AddressDescription_));
+        var->addrDescription->addrType = REG;
+        var->addrDescription->next = NULL;
+       // var->addrDescription->addr.regNo = allocate();
+        int regNo = -1;
+        for (int i = 8; i <= 25; i++) {// t0~t9 s0~s8
+            if (regs[i]->ifFree) {
+                regNo = i;
+               
+                break;
+            }
+        }
+        if (regNo == -1) {// all regs in use
+            int farthest = -99999;
+            for (int i = 8; i <= 25; i++) {
+                if (!regs[i]->ifFree) {
+                    regs[i]->dirty++;
+                    farthest = farthest > regs[i]->dirty ? farthest:regs[i]->dirty;
+                }
+            }
+            for (int i = 8; i <= 25; i++) {
+                if (!regs[i]->ifFree) {
+                    if (regs[i]->dirty == farthest) {
+                        regNo = i;
+                        break;
+                    }
+                }
+            }
+            // var->addrDescription->addr.regNo = regNo;
+
+        }
+        var->addrDescription->addr.regNo = regNo;
+        regs[regNo]->ifFree = false;
+        regs[regNo]->dirty = 0;
+        regs[regNo]->var = var;
+        fprintf(fp, "lw %s, %s\n", regs[regNo]->name, getOperand(op));
+        var->next = varHead;
+        varHead = var;
+        return regNo;
+    }
     /*
     char* varName = (char*)malloc(33);
     if(op->kind == TEMP_OP){
@@ -47,6 +107,7 @@ void initialRegisters() {
         regs[i] = (RegDescription)malloc(sizeof(struct RegDescription_));
         regs[i]->var = NULL;
         regs[i]->ifFree = true;
+        regs[i]->dirty = 0;
         regs[i]->name = (char*)malloc(6);
 	}
     

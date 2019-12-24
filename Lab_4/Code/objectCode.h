@@ -41,6 +41,7 @@ struct VarDescription_ {
 struct RegDescription_ {
     char* name; // name of the reg
     bool ifFree; // if is free
+    int dirty; // next use
     VarDescription var; // the variable stored
 };
 
