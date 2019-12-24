@@ -6,27 +6,30 @@
 #include<string.h>
 #include"objectCode.h"
 
+int resRet = 0;
+
 int getReg(FILE* fp, Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     // TODO: 局部寄存器分配算法
-    char* varName = getOperand(op);
+    /*
+    char* varName = (char*)malloc(33);
+    if(op->kind == TEMP_OP){
+        varName = getOperand(op);
+    }else if(op->kind == CONSTANT){
+        sprintf(varName, "%d", op->u.value);
+    }else if(op->kind == VARIABLE || op->kind == ADDRESS || op->kind == ADDTOVAL){
+        varName = op->u.varName;
+    }else{
+        fprintf(stderr, "Unexpected kind error in getReg(), objectCode.c\n");
+        exit(-1);
+    }
+    
     for(int i=0;i<32;i++){
         if(regs[i]->var!=NULL && !strcmp(varName, regs[i]->var->varName)){
-
+            return i;
         }
     }
-
-    VarDescription p = varHead->next;
-    while(p){
-        if(!strcmp(varName, p->varName)){
-            AddressDescription q = p->addrDescription;
-            while(q){
-                if(q->addrType == REG){
-                    return q->addr.regNo;
-                }
-            }
-            // TODO not in regs
-        }
-    }
+    */
+    return resRet++;
 }
 
 void initialVarList(){
@@ -40,8 +43,10 @@ void initialVarList(){
 
 void initialRegisters() {
     for (int i = 0; i < 32; i++) {
+        regs[i] = (RegDescription)malloc(sizeof(struct RegDescription_));
         regs[i]->var = NULL;
         regs[i]->ifFree = true;
+        regs[i]->name = (char*)malloc(6);
 	}
     
     strcpy(regs[0]->name, "$zero");
@@ -78,7 +83,7 @@ void initialRegisters() {
     strcpy(regs[31]->name, "$ra");
 }
 
-void printObjectCode(InterCode code, char *fileName) {
+void printObjectCode(char *fileName) {
     FILE* fp = fopen(fileName, "w");
 
     InterCode p = head->next;
@@ -261,20 +266,20 @@ void printObjectCode(InterCode code, char *fileName) {
                 break;
             }
             case ADD_2_VAL:{
-                int leftOp = getReg(fp, p->u.assign.left);
-                fprintf(fp, "lui %s, %s\n", regs[leftOp]->name, getOperand(p->u.assign.right));
+                int leftNo = getReg(fp, p->u.assign.left);
+                fprintf(fp, "lui %s, %s\n", regs[leftNo]->name, getOperand(p->u.assign.right));
                 break;
             }
             case VAL_2_VAL:{
-                int leftOp = getReg(fp, p->u.assign.left);
-                int rightOp = getReg(fp, p->u.assign.right);
-                fprintf(fp, "lw %s, 0(%s)\n", regs[leftOp]->name, regs[rightOp]->name);
+                int leftNo = getReg(fp, p->u.assign.left);
+                int rightNo = getReg(fp, p->u.assign.right);
+                fprintf(fp, "lw %s, 0(%s)\n", regs[leftNo]->name, regs[rightNo]->name);
                 break;
             }
             case VAL_2_ADD:{
-                int leftOp = getReg(fp, p->u.assign.left);
-                int rightOp = getReg(fp, p->u.assign.right);
-                fprintf(fp, "sw %s, 0(%s)\n", regs[rightOp]->name, regs[leftOp]->name);
+                int leftNo = getReg(fp, p->u.assign.left);
+                int rightNo = getReg(fp, p->u.assign.right);
+                fprintf(fp, "sw %s, 0(%s)\n", regs[rightNo]->name, regs[leftNo]->name);
                 break;
             }
             case GOTO:{
@@ -285,30 +290,64 @@ void printObjectCode(InterCode code, char *fileName) {
             case IF_GOTO:{
                 char* destOp = getOperand(p->u.logic.dest);
                 char* relop = p->u.logic.relop;
-                int leftOp = getReg(fp, p->u.logic.left);
-                int rightOp = getReg(fp, p->u.assign.right);
-                // fprintf(fp, "IF %s %s %s GOTO %s\n", leftOp, p->u.logic.relop, rightOp, destOp);
+
+                int leftNo = -1, rightNo = -1;
+                if(p->u.logic.left->kind != ADDTOVAL && p->u.logic.right->kind != ADDTOVAL){
+                    leftNo = getReg(fp, p->u.logic.left);
+                    rightNo = getReg(fp, p->u.logic.right);
+                }else{
+                    if(p->u.logic.left->kind == ADDTOVAL){
+                        leftNo = getReg(fp, p->u.binop.op1);
+                        Operand t1 = new_temp();
+                        int tempNo = getReg(fp, t1);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[leftNo]->name);
+                        leftNo = tempNo;
+                    } 
+                    if(p->u.logic.right->kind == ADDTOVAL){
+                        rightNo = getReg(fp, p->u.binop.op1);
+                        Operand t1 = new_temp();
+                        int tempNo = getReg(fp, t1);
+                        fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[rightNo]->name);
+                        rightNo = tempNo;
+                    }
+                }
+                // fprintf(fp, "IF %s %s %s GOTO %s\n", leftNo, p->u.logic.relop, rightNo, destOp);
                 if(!strcmp(relop, "==")){
-                    fprintf(fp, "beq %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                    fprintf(fp, "beq %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
                 }else if(!strcmp(relop, "!=")){
-                    fprintf(fp, "bne %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                    fprintf(fp, "bne %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
                 }else if(!strcmp(relop, ">")){
-                    fprintf(fp, "bgt %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                    // fprintf(fp, "bgt %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
+                    fprintf(fp, "slt $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
+                    fprintf(fp, "bne $1, $0, %s\n", destOp);
                 }else if(!strcmp(relop, "<")){
-                    fprintf(fp, "blt %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                    // fprintf(fp, "blt %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
+                    fprintf(fp, "sgt $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
+                    fprintf(fp, "bne $1, $0, %s\n", destOp);
                 }else if(!strcmp(relop, ">=")){
-                    fprintf(fp, "bge %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                    // fprintf(fp, "bge %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
+                    fprintf(fp, "sle $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
+                    fprintf(fp, "bne $1, $0, %s\n", destOp);
                 }else if(!strcmp(relop, "<=")){
-                    fprintf(fp, "ble %s, %s, %s\n", regs[leftOp]->name, regs[rightOp]->name, destOp);
+                    // fprintf(fp, "ble %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
+                    fprintf(fp, "sge $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
+                    fprintf(fp, "bne $1, $0, %s\n", destOp);
                 }else{
                     fprintf(stderr, "Unexpected relop in printObjectCode in objectCode.c\n");
                 }
                 break;
             }
             case RETURN:{
-                int retOp = getReg(fp, p->u.one.op);
-                fprintf(fp, "move $v0, %s\n", regs[retOp]->name);
-                fprintf(fp, "jr $ra");
+                int retNo = getReg(fp, p->u.one.op);
+                if(p->u.one.op->kind == ADDTOVAL){
+                    Operand t1 = new_temp();
+                    int tempNo = getReg(fp, t1);
+                    fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[retNo]->name);
+                    retNo = tempNo;
+                }
+                // fprintf(fp, "move $v0, %s\n", regs[retNo]->name);
+                fprintf(fp, "addu $v0, %s, $0\n", regs[retNo]->name);
+                fprintf(fp, "jr $ra\n");
                 break;
             }
             // TODO
@@ -323,9 +362,11 @@ void printObjectCode(InterCode code, char *fileName) {
                 break;
             }
             case CALL:{
-                char* leftOp = getOperand(p->u.assign.left);
-                char* rightOp = getOperand(p->u.assign.right);
-                fprintf(fp, "%s := CALL %s\n", leftOp, rightOp);
+                char* fucName = getOperand(p->u.assign.right);
+                fprintf(fp, "jal %s\n", fucName);
+                int leftNo = getReg(fp, p->u.assign.left);
+                // fprintf(fp, "move %s, $v0\n", regs[leftNo]->name);
+                fprintf(fp, "addu %s, $v0, $0\n", regs[leftNo]->name);
                 break;
             }
             case PARAM:{

@@ -50,6 +50,6 @@ VarDescription varHead; // variable list with head node
 int getReg(FILE* fp, Operand op);
 void initialVarList();
 void initialRegisters();
-void printObjectCode(InterCode code, char* fileName);
+void printObjectCode(char* fileName);
 
 #endif
