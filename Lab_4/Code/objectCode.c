@@ -8,7 +8,7 @@
 
 int resRet = 0;
 
-int getReg(FILE* fp, Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
+int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     // TODO: 局部寄存器分配算法
     /*
     char* varName = (char*)malloc(33);
@@ -39,6 +39,7 @@ void initialVarList(){
     varHead->next = NULL;
 
     // TODO initial all variable with their addr
+
 }
 
 void initialRegisters() {
@@ -84,7 +85,12 @@ void initialRegisters() {
 }
 
 void printObjectCode(char *fileName) {
-    FILE* fp = fopen(fileName, "w");
+    fp = fopen(fileName, "w");
+
+    fprintf(fp, ".data\n");
+    initialVarList();
+    initialRegisters();
+    fprintf(fp, ".text\n");
 
     InterCode p = head->next;
     while(p != head){
@@ -98,28 +104,28 @@ void printObjectCode(char *fileName) {
                 int leftNo = -1;
                 if(p->u.assign.left->kind == ADDTOVAL){
                     if(p->u.assign.right->kind == ADDTOVAL){  // *x = *y
-                        int rightNo = getReg(fp, p->u.assign.right);
+                        int rightNo = getReg(p->u.assign.right);
                         Operand t1 = new_temp();
-                        int tempNo = getReg(fp, t1);
+                        int tempNo = getReg(t1);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[rightNo]->name);
-                        leftNo = getReg(fp, p->u.assign.left);
+                        leftNo = getReg(p->u.assign.left);
                         fprintf(fp, "sw %s, 0(%s)\n", regs[tempNo]->name, regs[leftNo]->name);
                     }else{  // *x = y
-                        int rightNo = getReg(fp, p->u.assign.right);
-                        leftNo = getReg(fp, p->u.assign.left);
+                        int rightNo = getReg(p->u.assign.right);
+                        leftNo = getReg(p->u.assign.left);
                         fprintf(fp, "sw %s, 0(%s)\n", regs[rightNo]->name, regs[leftNo]->name);
                     }
                 }else{
                     if(p->u.assign.right->kind == ADDTOVAL){  // x = *y
-                        int rightNo = getReg(fp, p->u.assign.right);
-                        leftNo = getReg(fp, p->u.assign.left);
+                        int rightNo = getReg(p->u.assign.right);
+                        leftNo = getReg(p->u.assign.left);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[leftNo]->name, regs[rightNo]->name);
                     }else if(p->u.assign.right->kind == CONSTANT){  // x = #k
-                        leftNo = getReg(fp, p->u.assign.left);
+                        leftNo = getReg(p->u.assign.left);
                         fprintf(fp, "ori %s, $0, %d\n", regs[leftNo]->name, p->u.assign.right->u.value);
                     }else{  // x = y
-                        int rightNo = getReg(fp, p->u.assign.right);
-                        leftNo = getReg(fp, p->u.assign.left);
+                        int rightNo = getReg(p->u.assign.right);
+                        leftNo = getReg(p->u.assign.left);
                         fprintf(fp, "addu %s, %s, $0\n", regs[leftNo]->name, regs[rightNo]->name);
                     }
                 }
@@ -134,34 +140,34 @@ void printObjectCode(char *fileName) {
                 int resNo = -1 ,opNo1 = -1, opNo2 = -1;
 
                 if(p->u.binop.op1->kind == CONSTANT){
-                    opNo2 = getReg(fp, p->u.binop.op2);
-                    resNo = getReg(fp, p->u.binop.res);
+                    opNo2 = getReg(p->u.binop.op2);
+                    resNo = getReg(p->u.binop.res);
                     fprintf(fp, "addi %s, %s, %d\n", regs[resNo]->name, regs[opNo2]->name, p->u.binop.op1->u.value);
                 }else if(p->u.binop.op2->kind == CONSTANT){
-                    opNo1 = getReg(fp, p->u.binop.op1);
-                    resNo = getReg(fp, p->u.binop.res);
+                    opNo1 = getReg(p->u.binop.op1);
+                    resNo = getReg(p->u.binop.res);
                     fprintf(fp, "addi %s, %s, %d\n", regs[resNo]->name, regs[opNo1]->name, p->u.binop.op2->u.value);
                 }else{
                     if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
-                        opNo1 = getReg(fp, p->u.binop.op1);
-                        opNo2 = getReg(fp, p->u.binop.op2);
+                        opNo1 = getReg(p->u.binop.op1);
+                        opNo2 = getReg(p->u.binop.op2);
                     }else{
                         if(p->u.binop.op1->kind == ADDTOVAL){
-                            opNo1 = getReg(fp, p->u.binop.op1);
+                            opNo1 = getReg(p->u.binop.op1);
                             Operand t1 = new_temp();
-                            int tempNo = getReg(fp, t1);
+                            int tempNo = getReg(t1);
                             fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
                             opNo1 = tempNo;
                         } 
                         if(p->u.binop.op2->kind == ADDTOVAL){
-                            opNo2 = getReg(fp, p->u.binop.op1);
+                            opNo2 = getReg(p->u.binop.op1);
                             Operand t1 = new_temp();
-                            int tempNo = getReg(fp, t1);
+                            int tempNo = getReg(t1);
                             fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
                             opNo2 = tempNo;
                         }
                     }
-                    resNo = getReg(fp, p->u.binop.res);
+                    resNo = getReg(p->u.binop.res);
                     fprintf(fp, "add %s, %s, %s\n", regs[resNo]->name, regs[opNo1]->name, regs[opNo2]->name);
                 }
                 break;
@@ -175,30 +181,30 @@ void printObjectCode(char *fileName) {
                 int resNo = -1 ,opNo1 = -1, opNo2 = -1;
 
                 if(p->u.binop.op2->kind == CONSTANT){
-                    opNo1 = getReg(fp, p->u.binop.op1);
-                    resNo = getReg(fp, p->u.binop.res);
+                    opNo1 = getReg(p->u.binop.op1);
+                    resNo = getReg(p->u.binop.res);
                     fprintf(fp, "addi %s, %s, %d\n", regs[resNo]->name, regs[opNo1]->name, -p->u.binop.op2->u.value);
                 }else{
                     if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
-                        opNo1 = getReg(fp, p->u.binop.op1);
-                        opNo2 = getReg(fp, p->u.binop.op2);
+                        opNo1 = getReg(p->u.binop.op1);
+                        opNo2 = getReg(p->u.binop.op2);
                     }else{
                         if(p->u.binop.op1->kind == ADDTOVAL){
-                            opNo1 = getReg(fp, p->u.binop.op1);
+                            opNo1 = getReg(p->u.binop.op1);
                             Operand t1 = new_temp();
-                            int tempNo = getReg(fp, t1);
+                            int tempNo = getReg(t1);
                             fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
                             opNo1 = tempNo;
                         } 
                         if(p->u.binop.op2->kind == ADDTOVAL){
-                            opNo2 = getReg(fp, p->u.binop.op1);
+                            opNo2 = getReg(p->u.binop.op1);
                             Operand t1 = new_temp();
-                            int tempNo = getReg(fp, t1);
+                            int tempNo = getReg(t1);
                             fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
                             opNo2 = tempNo;
                         }
                     }
-                    resNo = getReg(fp, p->u.binop.res);
+                    resNo = getReg(p->u.binop.res);
                     fprintf(fp, "sub %s, %s, %s\n", regs[resNo]->name, regs[opNo1]->name, regs[opNo2]->name);
                 }
                 break;
@@ -211,25 +217,25 @@ void printObjectCode(char *fileName) {
 
                 int resNo = -1 ,opNo1 = -1, opNo2 = -1;
                 if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
-                    opNo1 = getReg(fp, p->u.binop.op1);
-                    opNo2 = getReg(fp, p->u.binop.op2);
+                    opNo1 = getReg(p->u.binop.op1);
+                    opNo2 = getReg(p->u.binop.op2);
                 }else{
                     if(p->u.binop.op1->kind == ADDTOVAL){
-                        opNo1 = getReg(fp, p->u.binop.op1);
+                        opNo1 = getReg(p->u.binop.op1);
                         Operand t1 = new_temp();
-                        int tempNo = getReg(fp, t1);
+                        int tempNo = getReg(t1);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
                         opNo1 = tempNo;
                     } 
                     if(p->u.binop.op2->kind == ADDTOVAL){
-                        opNo2 = getReg(fp, p->u.binop.op1);
+                        opNo2 = getReg(p->u.binop.op1);
                         Operand t1 = new_temp();
-                        int tempNo = getReg(fp, t1);
+                        int tempNo = getReg(t1);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
                         opNo2 = tempNo;
                     }
                 }
-                resNo = getReg(fp, p->u.binop.res);
+                resNo = getReg(p->u.binop.res);
                 fprintf(fp, "mul %s, %s, %s\n", regs[resNo]->name, regs[opNo1]->name, regs[opNo2]->name);
                 break;
             }
@@ -241,44 +247,44 @@ void printObjectCode(char *fileName) {
 
                 int resNo = -1 ,opNo1 = -1, opNo2 = -1;
                 if(p->u.binop.op1->kind != ADDTOVAL && p->u.binop.op2->kind != ADDTOVAL){
-                    opNo1 = getReg(fp, p->u.binop.op1);
-                    opNo2 = getReg(fp, p->u.binop.op2);
+                    opNo1 = getReg(p->u.binop.op1);
+                    opNo2 = getReg(p->u.binop.op2);
                 }else{
                     if(p->u.binop.op1->kind == ADDTOVAL){
-                        opNo1 = getReg(fp, p->u.binop.op1);
+                        opNo1 = getReg(p->u.binop.op1);
                         Operand t1 = new_temp();
-                        int tempNo = getReg(fp, t1);
+                        int tempNo = getReg(t1);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo1]->name);
                         opNo1 = tempNo;
                     } 
                     if(p->u.binop.op2->kind == ADDTOVAL){
-                        opNo2 = getReg(fp, p->u.binop.op1);
+                        opNo2 = getReg(p->u.binop.op1);
                         Operand t1 = new_temp();
-                        int tempNo = getReg(fp, t1);
+                        int tempNo = getReg(t1);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[opNo2]->name);
                         opNo2 = tempNo;
                     }
                 }
-                resNo = getReg(fp, p->u.binop.res);
+                resNo = getReg(p->u.binop.res);
 
                 fprintf(fp, "div %s, %s\n", regs[opNo1]->name, regs[opNo2]->name);
                 fprintf(fp, "mflo %s\n", regs[resNo]->name);
                 break;
             }
             case ADD_2_VAL:{
-                int leftNo = getReg(fp, p->u.assign.left);
+                int leftNo = getReg(p->u.assign.left);
                 fprintf(fp, "lui %s, %s\n", regs[leftNo]->name, getOperand(p->u.assign.right));
                 break;
             }
             case VAL_2_VAL:{
-                int leftNo = getReg(fp, p->u.assign.left);
-                int rightNo = getReg(fp, p->u.assign.right);
+                int leftNo = getReg(p->u.assign.left);
+                int rightNo = getReg(p->u.assign.right);
                 fprintf(fp, "lw %s, 0(%s)\n", regs[leftNo]->name, regs[rightNo]->name);
                 break;
             }
             case VAL_2_ADD:{
-                int leftNo = getReg(fp, p->u.assign.left);
-                int rightNo = getReg(fp, p->u.assign.right);
+                int leftNo = getReg(p->u.assign.left);
+                int rightNo = getReg(p->u.assign.right);
                 fprintf(fp, "sw %s, 0(%s)\n", regs[rightNo]->name, regs[leftNo]->name);
                 break;
             }
@@ -293,20 +299,20 @@ void printObjectCode(char *fileName) {
 
                 int leftNo = -1, rightNo = -1;
                 if(p->u.logic.left->kind != ADDTOVAL && p->u.logic.right->kind != ADDTOVAL){
-                    leftNo = getReg(fp, p->u.logic.left);
-                    rightNo = getReg(fp, p->u.logic.right);
+                    leftNo = getReg(p->u.logic.left);
+                    rightNo = getReg(p->u.logic.right);
                 }else{
                     if(p->u.logic.left->kind == ADDTOVAL){
-                        leftNo = getReg(fp, p->u.binop.op1);
+                        leftNo = getReg(p->u.binop.op1);
                         Operand t1 = new_temp();
-                        int tempNo = getReg(fp, t1);
+                        int tempNo = getReg(t1);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[leftNo]->name);
                         leftNo = tempNo;
                     } 
                     if(p->u.logic.right->kind == ADDTOVAL){
-                        rightNo = getReg(fp, p->u.binop.op1);
+                        rightNo = getReg(p->u.binop.op1);
                         Operand t1 = new_temp();
-                        int tempNo = getReg(fp, t1);
+                        int tempNo = getReg(t1);
                         fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[rightNo]->name);
                         rightNo = tempNo;
                     }
@@ -338,10 +344,10 @@ void printObjectCode(char *fileName) {
                 break;
             }
             case RETURN:{
-                int retNo = getReg(fp, p->u.one.op);
+                int retNo = getReg(p->u.one.op);
                 if(p->u.one.op->kind == ADDTOVAL){
                     Operand t1 = new_temp();
-                    int tempNo = getReg(fp, t1);
+                    int tempNo = getReg(t1);
                     fprintf(fp, "lw %s, 0(%s)\n", regs[tempNo]->name, regs[retNo]->name);
                     retNo = tempNo;
                 }
@@ -364,7 +370,7 @@ void printObjectCode(char *fileName) {
             case CALL:{
                 char* fucName = getOperand(p->u.assign.right);
                 fprintf(fp, "jal %s\n", fucName);
-                int leftNo = getReg(fp, p->u.assign.left);
+                int leftNo = getReg(p->u.assign.left);
                 // fprintf(fp, "move %s, $v0\n", regs[leftNo]->name);
                 fprintf(fp, "addu %s, $v0, $0\n", regs[leftNo]->name);
                 break;

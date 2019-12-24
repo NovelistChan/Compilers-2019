@@ -8,8 +8,6 @@ extern void semanticAnalysis();
 extern void initial();
 extern void generateInterCode();
 extern void printCode(char* fileName);
-extern void initialVarList();
-extern void initialRegisters();
 extern void printObjectCode(char *fileName);
 extern bool is_pass;
 
@@ -37,8 +35,6 @@ int main(int argc, char** argv){
       generateInterCode();
       printCode(argv[2]);
 
-      initialVarList();
-      initialRegisters();
       printObjectCode(argv[3]);
     }
   }
