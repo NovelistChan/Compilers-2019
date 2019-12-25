@@ -27,8 +27,9 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         var = var->next;
     }
 
-    AddressDescription addr = var->addrDescription;
+    AddressDescription addr = NULL;
     if (var != NULL) { // in varHead
+        addr = var->addrDescription;
         while (addr != NULL) {
             if (addr->addrType == REG) 
                 return addr->addr.regNo;
@@ -57,6 +58,7 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         for (int i = 8; i <= 25; i++) {
             if (!regs[i]->ifFree) {
                 if (regs[i]->dirty == farthest) {
+                    // TODO rewrite to address
                     regNo = i;
                     break;
                 }
@@ -66,16 +68,27 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     newAddr->addr.regNo = regNo;
     regs[regNo]->ifFree = false;
     regs[regNo]->dirty = 0;
-    regs[regNo]->var = var;
+    
     if (op->kind == CONSTANT)
         fprintf(fp, "ori %s, $0, %d\n", regs[regNo]->name, op->u.value);
-    else{
-        fprintf(fp, "lui %s, %s\n", regs[regNo]->name, varName);
-    }
 
     if(var != NULL){
-        // TODO load var to a reg and add a AddressDescription
+        addr = var->addrDescription;
+        while (addr != NULL) {
+            // TODO consider
+            if (addr->addrType == MEMORY){
+                int temp = atoi(addr->addr.value);
+                if(temp!=0 || !strcmp(addr->addr.value, "0")){
+                    fprintf(fp, "ori %s, $0, %d\n", regs[regNo]->name, temp);
+                }else{
+                    fprintf(fp, "lui %s, %s\n", regs[regNo]->name, addr->addr.value);
+                }
+            }
+            addr = addr->next;
+        }
+
         addr->next = newAddr;
+        regs[regNo]->var = var;
     }else { // a new var
         var = (VarDescription)malloc(sizeof(struct VarDescription_));
         var->varName = varName;
@@ -83,11 +96,16 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         
         var->next = varHead->next;
         varHead->next = var;
+
+        regs[regNo]->var = var;
     }
     return regNo;
 }
 
 void initialVarList(){
+    fprintf(fp, "_prompt: .asciiz \"Enter an integer:\"\n");
+    fprintf(fp, "_ret: .asciiz \"\\n\"\n");
+
     varHead = (VarDescription)malloc(sizeof(struct VarDescription_));
     varHead->varName = NULL;
     varHead->addrDescription = NULL;
@@ -100,6 +118,17 @@ void initialVarList(){
             if(p->info->kind == VARI){
                 if(p->info->type->kind == ARRAY || p->info->type->kind == STRUCTURE){
                     fprintf(fp, "%s: .space %d\n", p->name, getTypeSize(p->info->type));
+                    VarDescription var = (VarDescription)malloc(sizeof(struct VarDescription_));
+                    var->varName = p->name;
+                    AddressDescription addr = (AddressDescription)malloc(sizeof(struct AddressDescription_));
+                    addr->next = NULL;
+                    addr->addrType = MEMORY;
+                    sprintf(addr->addr.value, "%s", p->name);
+                    var->addrDescription = addr;
+                    var->next = NULL;
+
+                    var->next = varHead->next;
+                    varHead->next = var;
                 }
             }
             p = p->next;
@@ -159,6 +188,23 @@ void printObjectCode(char *fileName) {
     initialVarList();
     initialRegisters();
     fprintf(fp, ".text\n");
+
+    fprintf(fp, "read:\n");
+    fprintf(fp, "ori $v0, $0, 4\n");
+    fprintf(fp, "lui $a0, _prompt\n");
+    fprintf(fp, "syscall\n");
+    fprintf(fp, "ori $v0, $0, 5\n");
+    fprintf(fp, "syscall\n");
+    fprintf(fp, "jr $ra\n");
+
+    fprintf(fp, "write:\n");
+    fprintf(fp, "ori $v0, $0, 1\n");
+    fprintf(fp, "syscall\n");
+    fprintf(fp, "ori $v0, $0, 4\n");
+    fprintf(fp, "lui $a0, _ret\n");
+    fprintf(fp, "syscall\n");
+    fprintf(fp, "addu $v0, $0, $0\n");
+    fprintf(fp, "jr $ra\n");
 
     InterCode p = head->next;
     while(p != head){

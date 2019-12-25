@@ -19,6 +19,7 @@ struct AddressDescription_{
     union{
         int regNo;
         int offset; // offset of stack
+        char value[34];  // value in address
     }addr;
     AddressDescription next;
 };
