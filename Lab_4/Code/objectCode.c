@@ -7,6 +7,8 @@
 #include"objectCode.h"
 
 int resRet = 0;
+int stackOffset = 0;
+
 
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     // TODO: 局部寄存器分配算法
@@ -53,6 +55,30 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
             if (!regs[i]->ifFree) {
                 if (regs[i]->dirty == farthest) {
                     // TODO rewrite to address
+                    char *spillName = regs[i]->var->varName;
+                    if (spillName[0] == '#') {
+                        VarDescription p = varHead;
+                        while (p->next) { // delete CONSTANT
+                            if (!strcmp(p->next->varName, spillName)) {
+                                VarDescription q = p->next;
+                                p->next = q->next;
+                                q->next = NULL;
+                                free(q);
+                                break;
+                            }
+                        }
+                    } else {
+                        VarDescription p = varHead;
+                        while(p->next) {
+                            if(!strcmp(p->next->varName, spillName)) {
+                                VarDescription q = p->next;
+                                q->addrDescription[0] = NULL;
+                                q->addrDescription[1] = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                                q->addrDescription[1]->offset = stackOffset++;
+                                break;
+                            }
+                        }
+                    }
                     regNo = i;
                     break;
                 }
