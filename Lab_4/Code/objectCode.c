@@ -27,21 +27,15 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         var = var->next;
     }
 
-    AddressDescription addr = NULL;
     if (var != NULL) { // in varHead
-        addr = var->addrDescription;
-        while (addr != NULL) {
-            if (addr->addrType == REG) 
-                return addr->addr.regNo;
-            addr = addr->next;
+        if(var->addrDescription[0] != NULL){
+            return var->addrDescription[0]->regNo;
         }
     }
 
-    AddressDescription newAddr = (AddressDescription)malloc(sizeof(struct AddressDescription_));
-    newAddr->next = NULL;
-    newAddr->addrType = REG;
+    AddressDescription newAddr = (AddressDescription)malloc(sizeof(union AddressDescription_));
     int regNo = -1;
-    for (int i = 8; i <= 25; i++) {// t0~t9 s0~s8
+    for (int i = 8; i <= 25; i++) {// t0~t9 s0~s7
         if (regs[i]->ifFree) {
             regNo = i;
             break;
@@ -65,7 +59,7 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
             }
         }
     }
-    newAddr->addr.regNo = regNo;
+    newAddr->regNo = regNo;
     regs[regNo]->ifFree = false;
     regs[regNo]->dirty = 0;
     
@@ -73,26 +67,17 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         fprintf(fp, "ori %s, $0, %d\n", regs[regNo]->name, op->u.value);
 
     if(var != NULL){
-        addr = var->addrDescription;
-        while (addr != NULL) {
-            // TODO consider
-            if (addr->addrType == MEMORY){
-                int temp = atoi(addr->addr.value);
-                if(temp!=0 || !strcmp(addr->addr.value, "0")){
-                    fprintf(fp, "ori %s, $0, %d\n", regs[regNo]->name, temp);
-                }else{
-                    fprintf(fp, "lui %s, %s\n", regs[regNo]->name, addr->addr.value);
-                }
-            }
-            addr = addr->next;
+        if(var->addrDescription[2] != NULL){    // segment
+            fprintf(fp, "lui %s, %s\n", regs[regNo]->name, var->addrDescription[2]->name);
+        }else if(var->addrDescription[1] != NULL){  // stack
+            fprintf(fp, "lw %s, %d($fp)\n", regs[regNo]->name, var->addrDescription[1]->offset);
         }
-
-        addr->next = newAddr;
         regs[regNo]->var = var;
     }else { // a new var
         var = (VarDescription)malloc(sizeof(struct VarDescription_));
         var->varName = varName;
-        var->addrDescription = newAddr;
+        var->addrDescription[0] = newAddr;
+        var->addrDescription[1] = var->addrDescription[2] = NULL;
         
         var->next = varHead->next;
         varHead->next = var;
@@ -122,8 +107,8 @@ void initialVarList(){
                     var->varName = p->name;
                     AddressDescription addr = (AddressDescription)malloc(sizeof(struct AddressDescription_));
                     addr->next = NULL;
-                    addr->addrType = MEMORY;
-                    sprintf(addr->addr.value, "%s", p->name);
+                    addr->addrType = SEGMENT;
+                    sprintf(addr->addr.name, "%s", p->name);
                     var->addrDescription = addr;
                     var->next = NULL;
 
@@ -177,7 +162,7 @@ void initialRegisters() {
     strcpy(regs[27]->name, "$k1");
     strcpy(regs[28]->name, "$gp");
     strcpy(regs[29]->name, "$sp");
-    strcpy(regs[30]->name, "$s8");
+    strcpy(regs[30]->name, "$fp");
     strcpy(regs[31]->name, "$ra");
 }
 

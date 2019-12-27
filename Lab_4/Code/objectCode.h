@@ -6,12 +6,13 @@
 
 typedef struct RegDescription_ *RegDescription;
 typedef struct VarDescription_ *VarDescription;
-typedef struct AddressDescription_ *AddressDescription;
+typedef union AddressDescription_ *AddressDescription;
 
+/*
 typedef enum {
     REG,
-    MEMORY,
-    STACK
+    STACK,
+    SEGMENT
 } AddrType;
 
 struct AddressDescription_{
@@ -19,25 +20,24 @@ struct AddressDescription_{
     union{
         int regNo;
         int offset; // offset of stack
-        char value[34];  // value in address
+        char *name;  // name of variable in segment
     }addr;
     AddressDescription next;
+};
+*/
+
+union AddressDescription_{
+    int regNo;
+    int offset; // offset of stack
+    char *name;  // name of variable in segment
 };
 
 struct VarDescription_ {
     char* varName;
-    AddressDescription addrDescription;
+    AddressDescription addrDescription[3]; // 0: REG; 1: STACK; 2: SEGMENT
 
     VarDescription next;
 };
-
-/*
-struct VarDescription_ {
-    int regNo; // the reg where the variable stored
-    int position; //  the position when used next time
-    VarDescrition next;
-};
-*/
 
 struct RegDescription_ {
     char* name; // name of the reg
