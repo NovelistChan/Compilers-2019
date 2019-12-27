@@ -7,6 +7,7 @@
 typedef struct RegDescription_ *RegDescription;
 typedef struct VarDescription_ *VarDescription;
 typedef union AddressDescription_ *AddressDescription;
+typedef struct OffsetNode_ *OffsetNode;
 
 /*
 typedef enum {
@@ -45,6 +46,13 @@ struct RegDescription_ {
     int dirty; // next use
     VarDescription var; // the variable stored
 };
+
+struct OffsetNode_ {
+    int offset;
+    OffsetNode next;
+};
+
+OffsetNode nowOffset;
 
 RegDescription regs[32];
 VarDescription varHead; // variable list with head node

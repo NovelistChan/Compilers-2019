@@ -117,6 +117,10 @@ void initialVarList(){
     fprintf(fp, "_prompt: .asciiz \"Enter an integer:\"\n");
     fprintf(fp, "_ret: .asciiz \"\\n\"\n");
 
+    nowOffset = (OffsetNode)malloc(sizeof(struct OffsetNode_));
+    nowOffset->offset = 0;
+    nowOffset->next = NULL;
+
     varHead = (VarDescription)malloc(sizeof(struct VarDescription_));
     varHead->varName = NULL;
     varHead->addrDescription[0] = varHead->addrDescription[1] = varHead->addrDescription[2] = NULL;
