@@ -93,7 +93,7 @@ void initialVarList(){
 
     varHead = (VarDescription)malloc(sizeof(struct VarDescription_));
     varHead->varName = NULL;
-    varHead->addrDescription = NULL;
+    varHead->addrDescription[0] = varHead->addrDescription[1] = varHead->addrDescription[2] = NULL;
     varHead->next = NULL;
 
     // TODO initial all variable with their addr
@@ -105,11 +105,10 @@ void initialVarList(){
                     fprintf(fp, "%s: .space %d\n", p->name, getTypeSize(p->info->type));
                     VarDescription var = (VarDescription)malloc(sizeof(struct VarDescription_));
                     var->varName = p->name;
-                    AddressDescription addr = (AddressDescription)malloc(sizeof(struct AddressDescription_));
-                    addr->next = NULL;
-                    addr->addrType = SEGMENT;
-                    sprintf(addr->addr.name, "%s", p->name);
-                    var->addrDescription = addr;
+                    AddressDescription addr = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                    sprintf(addr->name, "%s", p->name);
+                    var->addrDescription[2] = addr;
+                    var->addrDescription[0] = var->addrDescription[1] = NULL;
                     var->next = NULL;
 
                     var->next = varHead->next;
