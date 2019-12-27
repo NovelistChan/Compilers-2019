@@ -7,7 +7,7 @@
 #include"objectCode.h"
 
 int resRet = 0;
-int stackOffset = 0;
+// int stackOffset = 0;
 
 
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
@@ -66,17 +66,21 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
                                 free(q);
                                 break;
                             }
+                            p = p->next;
                         }
                     } else {
                         VarDescription p = varHead;
                         while(p->next) {
                             if(!strcmp(p->next->varName, spillName)) {
                                 VarDescription q = p->next;
-                                q->addrDescription[0] = NULL;
-                                q->addrDescription[1] = (AddressDescription)malloc(sizeof(union AddressDescription_));
-                                q->addrDescription[1]->offset = stackOffset++;
+                                q->addrDescription[0] = NULL; 
+                                if  (q->addrDescription[2] == NULL) {
+                                    q->addrDescription[1] = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                                    q->addrDescription[1]->offset = nowOffset->offset;
+                                }
                                 break;
                             }
+                            p = p->next;
                         }
                     }
                     regNo = i;
