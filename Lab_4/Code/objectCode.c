@@ -6,10 +6,6 @@
 #include<string.h>
 #include"objectCode.h"
 
-int resRet = 0;
-// int stackOffset = 0;
-
-
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     // TODO: 局部寄存器分配算法
     char* varName = NULL;
@@ -77,6 +73,8 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
                                 if  (q->addrDescription[2] == NULL) {
                                     q->addrDescription[1] = (AddressDescription)malloc(sizeof(union AddressDescription_));
                                     q->addrDescription[1]->offset = nowOffset->offset;
+                                    fprintf(fp, "sw %s, %d($fp)\n", regs[i]->name, nowOffset->offset);
+                                    nowOffset->offset -= 4;
                                 }
                                 break;
                             }
