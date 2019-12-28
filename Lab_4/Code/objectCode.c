@@ -9,6 +9,44 @@
 int activeRegs[10];
 int activeNum = 0;
 int paramNum = 0;
+VarDescription callRegs[10];
+int savedRegs[8];
+int savedNum = 0;
+VarDescription savedVars[8];
+
+VarDescription spillReg(int i){
+    regs[i]->ifFree = true;
+    regs[i]->dirty = 0;
+
+    VarDescription ret = regs[i]->var;
+    regs[i]->var = NULL;
+    if (ret->varName[0] == '#') {
+        VarDescription p = varHead;
+        while (p->next) { // delete CONSTANT
+            if (!strcmp(p->next->varName, ret->varName)) {
+                VarDescription q = p->next;
+                p->next = q->next;
+                q->next = NULL;
+                free(q);
+                break;
+            }
+            p = p->next;
+        }
+        return NULL;
+    }
+
+    ret->addrDescription[0] = NULL; 
+    if (ret->addrDescription[2]){
+        return NULL;
+    }else {
+        ret->addrDescription[1] = (AddressDescription)malloc(sizeof(union AddressDescription_));
+        fprintf(fp, "addi $sp, $sp, -4\n");
+        fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
+        nowOffset -= 4;
+        ret->addrDescription[1]->offset = nowOffset;
+        return ret;
+    }
+}
 
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     char* varName = NULL;
@@ -53,6 +91,8 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         for (int i = 8; i <= 25; i++) {
             if (!regs[i]->ifFree) {
                 if (regs[i]->dirty == farthest) {
+                    spillReg(i);
+                    /*
                     char *spillName = regs[i]->var->varName;
                     if (spillName[0] == '#') {
                         VarDescription p = varHead;
@@ -84,6 +124,7 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
                             p = p->next;
                         }
                     }
+                    */
                     regNo = i;
                     break;
                 }
@@ -94,12 +135,13 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     regs[regNo]->ifFree = false;
     regs[regNo]->dirty = 0;
     
-    if (op->kind == CONSTANT)
-        fprintf(fp, "ori %s, $0, %d\n", regs[regNo]->name, op->u.value);
+    if (op->kind == CONSTANT){
+        fprintf(fp, "li %s, %d\n", regs[regNo]->name, op->u.value);
+    }
 
     if(var != NULL){
         if(var->addrDescription[2] != NULL){    // segment
-            fprintf(fp, "lui %s, %s\n", regs[regNo]->name, var->addrDescription[2]->name);
+            fprintf(fp, "la %s, %s\n", regs[regNo]->name, var->addrDescription[2]->name);
         }else if(var->addrDescription[1] != NULL){  // stack
             fprintf(fp, "lw %s, %d($fp)\n", regs[regNo]->name, var->addrDescription[1]->offset);
         }
@@ -201,20 +243,20 @@ void printObjectCode(char *fileName) {
     fprintf(fp, ".text\n");
 
     fprintf(fp, "read:\n");
-    fprintf(fp, "ori $v0, $0, 4\n");
-    fprintf(fp, "lui $a0, _prompt\n");
+    fprintf(fp, "li $v0, 4\n");
+    fprintf(fp, "la $a0, _prompt\n");
     fprintf(fp, "syscall\n");
-    fprintf(fp, "ori $v0, $0, 5\n");
+    fprintf(fp, "li $v0, 5\n");
     fprintf(fp, "syscall\n");
     fprintf(fp, "jr $ra\n");
 
     fprintf(fp, "write:\n");
-    fprintf(fp, "ori $v0, $0, 1\n");
+    fprintf(fp, "li $v0, 1\n");
     fprintf(fp, "syscall\n");
-    fprintf(fp, "ori $v0, $0, 4\n");
-    fprintf(fp, "lui $a0, _ret\n");
+    fprintf(fp, "li $v0, 4\n");
+    fprintf(fp, "la $a0, _ret\n");
     fprintf(fp, "syscall\n");
-    fprintf(fp, "addu $v0, $0, $0\n");
+    fprintf(fp, "move $v0, $0\n");
     fprintf(fp, "jr $ra\n");
 
     InterCode p = head->next;
@@ -244,9 +286,13 @@ void printObjectCode(char *fileName) {
 
                 // save $s0~$s7 in stack
                 for(int i=16;i<=23;i++){
-                    fprintf(fp, "addi $sp, $sp, -4\n");
-                    fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
-                    nowOffset -= 4;
+                    if(!regs[i]->ifFree){
+                        VarDescription varTemp = spillReg(i);
+                        if(varTemp){
+                            savedRegs[savedNum] = i;
+                            savedVars[savedNum++] = varTemp;
+                        }
+                    }
                 }
 
                 break;
@@ -273,11 +319,11 @@ void printObjectCode(char *fileName) {
                         fprintf(fp, "lw %s, 0(%s)\n", regs[leftNo]->name, regs[rightNo]->name);
                     }else if(p->u.assign.right->kind == CONSTANT){  // x = #k
                         leftNo = getReg(p->u.assign.left);
-                        fprintf(fp, "ori %s, $0, %d\n", regs[leftNo]->name, p->u.assign.right->u.value);
+                        fprintf(fp, "li %s, %d\n", regs[leftNo]->name, p->u.assign.right->u.value);
                     }else{  // x = y
                         int rightNo = getReg(p->u.assign.right);
                         leftNo = getReg(p->u.assign.left);
-                        fprintf(fp, "addu %s, %s, $0\n", regs[leftNo]->name, regs[rightNo]->name);
+                        fprintf(fp, "move %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
                     }
                 }
                 break;
@@ -424,7 +470,7 @@ void printObjectCode(char *fileName) {
             }
             case ADD_2_VAL:{
                 int leftNo = getReg(p->u.assign.left);
-                fprintf(fp, "lui %s, %s\n", regs[leftNo]->name, getOperand(p->u.assign.right));
+                fprintf(fp, "la %s, %s\n", regs[leftNo]->name, getOperand(p->u.assign.right));
                 break;
             }
             case VAL_2_VAL:{
@@ -474,21 +520,13 @@ void printObjectCode(char *fileName) {
                 }else if(!strcmp(relop, "!=")){
                     fprintf(fp, "bne %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
                 }else if(!strcmp(relop, ">")){
-                    // fprintf(fp, "bgt %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
-                    fprintf(fp, "slt $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
-                    fprintf(fp, "bne $1, $0, %s\n", destOp);
+                    fprintf(fp, "bgt %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
                 }else if(!strcmp(relop, "<")){
-                    // fprintf(fp, "blt %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
-                    fprintf(fp, "sgt $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
-                    fprintf(fp, "bne $1, $0, %s\n", destOp);
+                    fprintf(fp, "blt %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
                 }else if(!strcmp(relop, ">=")){
-                    // fprintf(fp, "bge %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
-                    fprintf(fp, "sle $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
-                    fprintf(fp, "bne $1, $0, %s\n", destOp);
+                    fprintf(fp, "bge %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
                 }else if(!strcmp(relop, "<=")){
-                    // fprintf(fp, "ble %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
-                    fprintf(fp, "sge $1, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name);
-                    fprintf(fp, "bne $1, $0, %s\n", destOp);
+                    fprintf(fp, "ble %s, %s, %s\n", regs[leftNo]->name, regs[rightNo]->name, destOp);
                 }else{
                     fprintf(stderr, "Unexpected relop in printObjectCode in objectCode.c\n");
                 }
@@ -503,15 +541,19 @@ void printObjectCode(char *fileName) {
                     retNo = tempNo;
                 }
                 // fprintf(fp, "move $v0, %s\n", regs[retNo]->name);
-                fprintf(fp, "addu $v0, %s, $0\n", regs[retNo]->name);
+                fprintf(fp, "move $v0, %s\n", regs[retNo]->name);
 
-                if(strcmp(nowFunc, "main")&&strcmp(nowFunc, "read")&&strcmp(nowFunc, "write")){
-                    for(int i=16;i<=23;i++){
-                        fprintf(fp, "lw %s, %d($fp)\n", regs[i]->name, -8-4*(i-15));
+                if(strcmp(nowFunc, "main")){
+                    for(int i=savedNum-1;i>=0;i--){
+                        fprintf(fp, "lw %s, %d($fp)\n", regs[savedRegs[i]]->name, savedVars[i]->addrDescription[1]->offset);
+                        savedVars[i]->addrDescription[1] = NULL;
+                        savedVars[i]->addrDescription[0] = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                        savedVars[i]->addrDescription[0]->regNo = savedRegs[i];
                     }
-                    fprintf(fp, "lw $ra, -4($fp)\n");
-                    fprintf(fp, "lw $fp, -8($fp)\n");
                 }
+
+                fprintf(fp, "lw $ra, -4($fp)\n");
+                fprintf(fp, "lw $fp, -8($fp)\n");
 
                 fprintf(fp, "jr $ra\n");
                 
@@ -527,23 +569,32 @@ void printObjectCode(char *fileName) {
                 // save all active regs{$t0 ~ $t9} in stack
                 for(int i=8;i<=15;i++){ // $t0~$t7
                     if(!regs[i]->ifFree){
-                        activeRegs[activeNum++] = i;
-                        fprintf(fp, "addi $sp, $sp, -4\n");
-                        fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
-                        nowOffset -= 4;
+                        VarDescription varTemp = spillReg(i);
+                        if(varTemp){
+                            activeRegs[activeNum] = i;
+                            callRegs[activeNum++] = varTemp;
+                        }
                     }
                 }
                 for(int i=24;i<=25;i++){ // $t8~$t9
                     if(!regs[i]->ifFree){
-                        activeRegs[activeNum++] = i;
-                        fprintf(fp, "addi $sp, $sp, -4\n");
-                        fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
-                        nowOffset -= 4;
+                        VarDescription varTemp = spillReg(i);
+                        if(varTemp){
+                            activeRegs[activeNum] = i;
+                            callRegs[activeNum++] = varTemp;
+                        }
                     }
                 }
 
                 // VARIABLE, CONSTANT, ADDRESS(?)
-                paramNum = 0;
+                int paramsNum = 0;
+                InterCode q = p;
+                while(q->kind == ARG){
+                    paramsNum ++;
+                    q = q->next;
+                }
+                paramNum = paramsNum;
+
                 while(p->kind == ARG){
                     Operand op = p->u.one.op;
                     if(op->kind == ADDRESS){
@@ -552,21 +603,21 @@ void printObjectCode(char *fileName) {
                     }
 
                     int opNo = getReg(op);
-                    switch(paramNum){
-                        case 0:{
-                            fprintf(fp, "addu $a0, %s, $0\n", regs[opNo]->name);
-                            break;
-                        }
+                    switch(paramsNum){
                         case 1:{
-                            fprintf(fp, "addu $a1, %s, $0\n", regs[opNo]->name);
+                            fprintf(fp, "move $a0, %s\n", regs[opNo]->name);
                             break;
                         }
                         case 2:{
-                            fprintf(fp, "addu $a2, %s, $0\n", regs[opNo]->name);
+                            fprintf(fp, "move $a1, %s\n", regs[opNo]->name);
                             break;
                         }
                         case 3:{
-                            fprintf(fp, "addu $a3, %s, $0\n", regs[opNo]->name);
+                            fprintf(fp, "move $a2, %s\n", regs[opNo]->name);
+                            break;
+                        }
+                        case 4:{
+                            fprintf(fp, "move $a3, %s\n", regs[opNo]->name);
                             break;
                         }
                         default:{
@@ -576,7 +627,7 @@ void printObjectCode(char *fileName) {
                         }
                     }
 
-                    paramNum ++;
+                    paramsNum --;
                     p = p->next;
                 }
                 p = p->prev;
@@ -589,18 +640,20 @@ void printObjectCode(char *fileName) {
                     activeNum = 0;
                     for(int i=8;i<=15;i++){ // $t0~$t7
                         if(!regs[i]->ifFree){
-                            activeRegs[activeNum++] = i;
-                            fprintf(fp, "addi $sp, $sp, -4\n");
-                            fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
-                            nowOffset -= 4;
+                            VarDescription varTemp = spillReg(i);
+                            if(varTemp){
+                                activeRegs[activeNum] = i;
+                                callRegs[activeNum++] = varTemp;
+                            }
                         }
                     }
                     for(int i=24;i<=25;i++){ // $t8~$t9
                         if(!regs[i]->ifFree){
-                            activeRegs[activeNum++] = i;
-                            fprintf(fp, "addi $sp, $sp, -4\n");
-                            fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
-                            nowOffset -= 4;
+                            VarDescription varTemp = spillReg(i);
+                            if(varTemp){
+                                activeRegs[activeNum] = i;
+                                callRegs[activeNum++] = varTemp;
+                            }
                         }
                     }
                 }
@@ -612,18 +665,27 @@ void printObjectCode(char *fileName) {
                 int paramsOffset = 0;
                 if(paramNum > 5){
                     paramsOffset = 4*(paramNum - 5);
-                    fprintf(fp, "addi $sp, $sp, %d\n", paramsOffset);
                 }
                 paramNum = 0;
+
+                paramsOffset += 4*activeNum;
+                fprintf(fp, "addi $sp, $sp, %d\n", paramsOffset);
+                nowOffset += paramsOffset;
+
                 for(int i=activeNum-1;i>=0;i--){
-                    fprintf(fp, "addi $sp, $sp, 4\n");
-                    fprintf(fp, "lw %s, 0($sp)\n", regs[activeRegs[i]]->name);
+                    // nowOffset += 4;
+                    // fprintf(fp, "addi $sp, $sp, 4\n");
+                    // fprintf(fp, "lw %s, 0($sp)\n", regs[activeRegs[i]]->name);
+                    fprintf(fp, "lw %s, %d($fp)\n", regs[activeRegs[i]]->name, callRegs[i]->addrDescription[1]->offset);
+                    callRegs[i]->addrDescription[1] = NULL;
+                    callRegs[i]->addrDescription[0] = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                    callRegs[i]->addrDescription[0]->regNo = activeRegs[i];
                 }
                 activeNum = 0;
 
                 int leftNo = getReg(p->u.assign.left);
                 // fprintf(fp, "move %s, $v0\n", regs[leftNo]->name);
-                fprintf(fp, "addu %s, $v0, $0\n", regs[leftNo]->name);
+                fprintf(fp, "move %s, $v0\n", regs[leftNo]->name);
                 break;
             }
             case PARAM:{
@@ -732,14 +794,14 @@ void printObjectCode(char *fileName) {
                 fprintf(fp, "jal read\n");
                 
                 int opNo = getReg(p->u.one.op);
-                fprintf(fp, "addu %s, $v0, $0\n", regs[opNo]->name);
+                fprintf(fp, "move %s, $v0\n", regs[opNo]->name);
                 break;
             }
             case WRITE:{
-                fprintf(fp, "jal write\n");
-                
                 int opNo = getReg(p->u.one.op);
-                fprintf(fp, "addu %s, $v0, $0\n", regs[opNo]->name);
+                fprintf(fp, "move $a0, %s\n", regs[opNo]->name);
+
+                fprintf(fp, "jal write\n");
                 break;
             }
             default:{
