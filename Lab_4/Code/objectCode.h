@@ -47,12 +47,17 @@ struct RegDescription_ {
     VarDescription var; // the variable stored
 };
 
+/*
 struct OffsetNode_ {
+    char* funcName;
     int offset;
     OffsetNode next;
 };
 
 OffsetNode nowOffset;
+*/
+int nowOffset;
+char* nowFunc;
 
 RegDescription regs[32];
 VarDescription varHead; // variable list with head node

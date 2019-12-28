@@ -6,8 +6,11 @@
 #include<string.h>
 #include"objectCode.h"
 
+int activeRegs[10];
+int activeNum = 0;
+int paramNum = 0;
+
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
-    // TODO: 局部寄存器分配算法
     char* varName = NULL;
     if(op->kind == TEMP_OP || op->kind == CONSTANT){
         varName = getOperand(op);
@@ -50,7 +53,6 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
         for (int i = 8; i <= 25; i++) {
             if (!regs[i]->ifFree) {
                 if (regs[i]->dirty == farthest) {
-                    // TODO rewrite to address
                     char *spillName = regs[i]->var->varName;
                     if (spillName[0] == '#') {
                         VarDescription p = varHead;
@@ -72,9 +74,10 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
                                 q->addrDescription[0] = NULL; 
                                 if  (q->addrDescription[2] == NULL) {
                                     q->addrDescription[1] = (AddressDescription)malloc(sizeof(union AddressDescription_));
-                                    q->addrDescription[1]->offset = nowOffset->offset;
-                                    fprintf(fp, "sw %s, %d($fp)\n", regs[i]->name, nowOffset->offset);
-                                    nowOffset->offset -= 4;
+                                    fprintf(fp, "addi $sp, $sp, -4\n");
+                                    fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
+                                    nowOffset -= 4;
+                                    q->addrDescription[1]->offset = nowOffset;
                                 }
                                 break;
                             }
@@ -119,36 +122,28 @@ void initialVarList(){
     fprintf(fp, "_prompt: .asciiz \"Enter an integer:\"\n");
     fprintf(fp, "_ret: .asciiz \"\\n\"\n");
 
-    nowOffset = (OffsetNode)malloc(sizeof(struct OffsetNode_));
-    nowOffset->offset = 0;
-    nowOffset->next = NULL;
-
     varHead = (VarDescription)malloc(sizeof(struct VarDescription_));
     varHead->varName = NULL;
     varHead->addrDescription[0] = varHead->addrDescription[1] = varHead->addrDescription[2] = NULL;
     varHead->next = NULL;
 
-    // TODO initial all variable with their addr
-    for(int i=0;i<TABLE_SIZE;i++){
-        HashNode p = hashTable[i]->hashList;
-        while(p){
-            if(p->info->kind == VARI){
-                if(p->info->type->kind == ARRAY || p->info->type->kind == STRUCTURE){
-                    fprintf(fp, "%s: .space %d\n", p->name, getTypeSize(p->info->type));
-                    VarDescription var = (VarDescription)malloc(sizeof(struct VarDescription_));
-                    var->varName = p->name;
-                    AddressDescription addr = (AddressDescription)malloc(sizeof(union AddressDescription_));
-                    sprintf(addr->name, "%s", p->name);
-                    var->addrDescription[2] = addr;
-                    var->addrDescription[0] = var->addrDescription[1] = NULL;
-                    var->next = NULL;
+    InterCode p = head->next;
+    while(p != head){
+        if(p->kind == DEC){
+            char* varName = p->u.dec.op->u.varName;
+            fprintf(fp, "%s: .space %d\n", varName, p->u.dec.size);
+            VarDescription var = (VarDescription)malloc(sizeof(struct VarDescription_));
+            var->varName = varName;
+            AddressDescription addr = (AddressDescription)malloc(sizeof(union AddressDescription_));
+            addr->name = varName;
+            var->addrDescription[2] = addr;
+            var->addrDescription[0] = var->addrDescription[1] = NULL;
+            var->next = NULL;
 
-                    var->next = varHead->next;
-                    varHead->next = var;
-                }
-            }
-            p = p->next;
+            var->next = varHead->next;
+            varHead->next = var;
         }
+        p = p->next;
     }
 
     fprintf(fp, ".globl main\n");
@@ -225,9 +220,35 @@ void printObjectCode(char *fileName) {
     InterCode p = head->next;
     while(p != head){
         switch(p->kind){
-            case LABEL: case FUNCTION:{
-                char* op = getOperand(p->u.one.op);
-                fprintf(fp, "%s:\n", op);
+            case LABEL:{
+                char* labelName = getOperand(p->u.one.op);
+                fprintf(fp, "%s:\n", labelName);
+                break;
+            }
+            case FUNCTION:{
+                nowFunc = getOperand(p->u.one.op);
+                fprintf(fp, "%s:\n", nowFunc);
+
+                // save $ra, $fp in stack
+                fprintf(fp, "addi $sp, $sp, -4\n");
+                fprintf(fp, "sw $ra, 0($sp)\n");
+                fprintf(fp, "addi $sp, $sp, -4\n");
+                fprintf(fp, "sw $fp, 0($sp)\n");
+                fprintf(fp, "addi $fp, $sp, 8\n");
+
+                nowOffset = -8;
+
+                if(!strcmp(nowFunc, "main")){
+                    break;
+                }
+
+                // save $s0~$s7 in stack
+                for(int i=16;i<=23;i++){
+                    fprintf(fp, "addi $sp, $sp, -4\n");
+                    fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
+                    nowOffset -= 4;
+                }
+
                 break;
             }
             case ASSIGN:{
@@ -483,41 +504,242 @@ void printObjectCode(char *fileName) {
                 }
                 // fprintf(fp, "move $v0, %s\n", regs[retNo]->name);
                 fprintf(fp, "addu $v0, %s, $0\n", regs[retNo]->name);
+
+                if(strcmp(nowFunc, "main")&&strcmp(nowFunc, "read")&&strcmp(nowFunc, "write")){
+                    for(int i=16;i<=23;i++){
+                        fprintf(fp, "lw %s, %d($fp)\n", regs[i]->name, -8-4*(i-15));
+                    }
+                    fprintf(fp, "lw $ra, -4($fp)\n");
+                    fprintf(fp, "lw $fp, -8($fp)\n");
+                }
+
                 fprintf(fp, "jr $ra\n");
+                
+                nowOffset = 0;
                 break;
             }
-            // TODO
+            
             case DEC:{
-                char* op = getOperand(p->u.dec.op);
-                fprintf(fp, "DEC %s %d\n", op, p->u.dec.size);
+                // do nothing
                 break;
             }
             case ARG:{
-                char* op = getOperand(p->u.one.op);
-                fprintf(fp, "ARG %s\n", op);
+                // save all active regs{$t0 ~ $t9} in stack
+                for(int i=8;i<=15;i++){ // $t0~$t7
+                    if(!regs[i]->ifFree){
+                        activeRegs[activeNum++] = i;
+                        fprintf(fp, "addi $sp, $sp, -4\n");
+                        fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
+                        nowOffset -= 4;
+                    }
+                }
+                for(int i=24;i<=25;i++){ // $t8~$t9
+                    if(!regs[i]->ifFree){
+                        activeRegs[activeNum++] = i;
+                        fprintf(fp, "addi $sp, $sp, -4\n");
+                        fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
+                        nowOffset -= 4;
+                    }
+                }
+
+                // VARIABLE, CONSTANT, ADDRESS(?)
+                paramNum = 0;
+                while(p->kind == ARG){
+                    Operand op = p->u.one.op;
+                    if(op->kind == ADDRESS){
+                        fprintf(stderr, "Unexpected kind in case ARG, printObjectCode(), objectCode.c\n");
+                        exit(-1);
+                    }
+
+                    int opNo = getReg(op);
+                    switch(paramNum){
+                        case 0:{
+                            fprintf(fp, "addu $a0, %s, $0\n", regs[opNo]->name);
+                            break;
+                        }
+                        case 1:{
+                            fprintf(fp, "addu $a1, %s, $0\n", regs[opNo]->name);
+                            break;
+                        }
+                        case 2:{
+                            fprintf(fp, "addu $a2, %s, $0\n", regs[opNo]->name);
+                            break;
+                        }
+                        case 3:{
+                            fprintf(fp, "addu $a3, %s, $0\n", regs[opNo]->name);
+                            break;
+                        }
+                        default:{
+                            fprintf(fp, "addi $sp, $sp, -4\n");
+                            fprintf(fp, "sw %s, 0($sp)\n", regs[opNo]->name);
+                            nowOffset -= 4;
+                        }
+                    }
+
+                    paramNum ++;
+                    p = p->next;
+                }
+                p = p->prev;
                 break;
             }
             case CALL:{
-                char* fucName = getOperand(p->u.assign.right);
-                fprintf(fp, "jal %s\n", fucName);
+                // 0 params call
+                if(paramNum == 0){
+                    // save all active regs{$t0 ~ $t9} in stack
+                    activeNum = 0;
+                    for(int i=8;i<=15;i++){ // $t0~$t7
+                        if(!regs[i]->ifFree){
+                            activeRegs[activeNum++] = i;
+                            fprintf(fp, "addi $sp, $sp, -4\n");
+                            fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
+                            nowOffset -= 4;
+                        }
+                    }
+                    for(int i=24;i<=25;i++){ // $t8~$t9
+                        if(!regs[i]->ifFree){
+                            activeRegs[activeNum++] = i;
+                            fprintf(fp, "addi $sp, $sp, -4\n");
+                            fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
+                            nowOffset -= 4;
+                        }
+                    }
+                }
+
+                char* funcName = getOperand(p->u.assign.right);
+                fprintf(fp, "jal %s\n", funcName);
+
+                // recover all saved regs{$t0 ~ $t9} from stack
+                int paramsOffset = 0;
+                if(paramNum > 5){
+                    paramsOffset = 4*(paramNum - 5);
+                    fprintf(fp, "addi $sp, $sp, %d\n", paramsOffset);
+                }
+                paramNum = 0;
+                for(int i=activeNum-1;i>=0;i--){
+                    fprintf(fp, "addi $sp, $sp, 4\n");
+                    fprintf(fp, "lw %s, 0($sp)\n", regs[activeRegs[i]]->name);
+                }
+                activeNum = 0;
+
                 int leftNo = getReg(p->u.assign.left);
                 // fprintf(fp, "move %s, $v0\n", regs[leftNo]->name);
                 fprintf(fp, "addu %s, $v0, $0\n", regs[leftNo]->name);
                 break;
             }
             case PARAM:{
-                char* op = getOperand(p->u.one.op);
-                fprintf(fp, "PARAM %s\n", op);
+                /*
+                Operand op = p->u.one.op;
+                if(op->kind != VARIABLE){
+                    fprintf(stderr, "Unexpected kind in case PARAM, printObjectCode(), objectCode.c\n");
+                    exit(-1);
+                }
+
+                if(paramNum == 0){
+                    fprintf(stderr, "Unexpected params error in case PARAM, printObjectCode(), objectCode.c\n");
+                    exit(-1);
+                }
+
+                VarDescription newVar = (VarDescription)malloc(sizeof(struct VarDescription_));
+                newVar->varName = op->u.varName;
+                newVar->next = NULL;
+                newVar->addrDescription[2] = NULL;
+
+                AddressDescription newAddr = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                switch(paramNum){
+                    case 1:{
+                        newAddr->regNo = 4; // $a0
+                        break;
+                    }
+                    case 2:{
+                        newAddr->regNo = 5; // $a1
+                        break;
+                    }
+                    case 3:{
+                        newAddr->regNo = 6; // $a2
+                        break;
+                    }
+                    case 4:{
+                        newAddr->regNo = 7; // $a3
+                        break;
+                    }
+                    default:{
+                        newAddr->offset = 4*(paramNum - 4);
+                    }
+                }
+
+                if(paramNum <= 4){
+                    newVar->addrDescription[0] = newAddr;
+                    newVar->addrDescription[1] = NULL;
+                }else{
+                    newVar->addrDescription[1] = newAddr;
+                    newVar->addrDescription[0] = NULL;
+                }
+                paramNum --;
+                break;
+                */
+                
+                int paramsNum = 0;
+                while(p->kind == PARAM){
+                    Operand op = p->u.one.op;
+                    if(op->kind != VARIABLE){
+                        fprintf(stderr, "Unexpected kind in case PARAM, printObjectCode(), objectCode.c\n");
+                        exit(-1);
+                    }
+
+                    VarDescription newVar = (VarDescription)malloc(sizeof(struct VarDescription_));
+                    newVar->varName = op->u.varName;
+                    newVar->next = NULL;
+                    newVar->addrDescription[2] = NULL;
+
+                    AddressDescription newAddr = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                    switch(paramsNum){
+                        case 0:{
+                            newAddr->regNo = 4; // $a0
+                            break;
+                        }
+                        case 1:{
+                            newAddr->regNo = 5; // $a1
+                            break;
+                        }
+                        case 2:{
+                            newAddr->regNo = 6; // $a2
+                            break;
+                        }
+                        case 3:{
+                            newAddr->regNo = 7; // $a3
+                            break;
+                        }
+                        default:{
+                            newAddr->offset = 4*(paramsNum - 4);
+                        }
+                    }
+
+                    if(paramsNum < 4){
+                        newVar->addrDescription[0] = newAddr;
+                        newVar->addrDescription[1] = NULL;
+                    }else{
+                        newVar->addrDescription[1] = newAddr;
+                        newVar->addrDescription[0] = NULL;
+                    }
+
+                    paramsNum ++;
+                    p = p->next;
+                }
+                p = p->prev;
                 break;
             }
             case READ:{
-                char* op = getOperand(p->u.one.op);
-                fprintf(fp, "READ %s\n", op);
+                fprintf(fp, "jal read\n");
+                
+                int opNo = getReg(p->u.one.op);
+                fprintf(fp, "addu %s, $v0, $0\n", regs[opNo]->name);
                 break;
             }
             case WRITE:{
-                char* op = getOperand(p->u.one.op);
-                fprintf(fp, "WRITE %s\n", op);
+                fprintf(fp, "jal write\n");
+                
+                int opNo = getReg(p->u.one.op);
+                fprintf(fp, "addu %s, $v0, $0\n", regs[opNo]->name);
                 break;
             }
             default:{
