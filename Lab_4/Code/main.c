@@ -12,8 +12,8 @@ extern void printObjectCode(char *fileName);
 extern bool is_pass;
 
 int main(int argc, char** argv){
-  if(argc<=3){
-    fprintf(stderr, "Need 3 params.\n");
+  if(argc<=2){
+    fprintf(stderr, "Need 2 params.\n");
     return 1;
   }
 
@@ -33,9 +33,9 @@ int main(int argc, char** argv){
     if(is_pass){
       initial();
       generateInterCode();
-      printCode(argv[2]);
+      // printCode(argv[2]);
 
-      printObjectCode(argv[3]);
+      printObjectCode(argv[2]);
     }
   }
 

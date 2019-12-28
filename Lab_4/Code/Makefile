@@ -34,13 +34,13 @@ syntax-c: $(YFILE)
 # 定义的一些伪目标
 .PHONY: clean test
 test:
-	./parser ../Test/test1.cmm out1.ir out1.s
-	./parser ../Test/test2.cmm out2.ir out2.s
-	./parser ../Test/test3.cmm out3.ir out3.s
-#	./parser ../Test/test4.cmm out4.ir\
+	./parser ../Test/test1.cmm out1.s
+	./parser ../Test/test2.cmm out2.s
+#	./parser ../Test/test3.cmm out3.s\
+	./parser ../Test/test4.cmm out4.ir\
 	./parser ../Test/test5.cmm out5.ir\
 	./parser ../Test/test6.cmm out6.ir\
-	./parser ../Test/test7.cmm out7.ir out7.s\
+	./parser ../Test/test7.cmm out7.ir\
 	./parser ../Test/test8.cmm\
 	./parser ../Test/test9.cmm\
 	./parser ../Test/test10.cmm\
