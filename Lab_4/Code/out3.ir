@@ -1,0 +1,7 @@
+FUNCTION main :
+i := #1
+j := i
+t2 := j + #1
+j := t2
+t5 := i + j
+i := t5

@@ -783,7 +783,8 @@ void printObjectCode(char *fileName) {
                         newVar->addrDescription[1] = newAddr;
                         newVar->addrDescription[0] = NULL;
                     }
-
+                    newVar->next = varHead->next;
+                    varHead->next = newVar;
                     paramsNum ++;
                     p = p->next;
                 }
