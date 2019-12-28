@@ -48,6 +48,30 @@ VarDescription spillReg(int i){
     }
 }
 
+int getFreeReg(){
+    for (int i = 8; i <= 25; i++) {// t0~t9 s0~s7
+        if (regs[i]->ifFree) {
+            return i;
+        }
+    }
+
+    int farthest = -99999;
+    for (int i = 8; i <= 25; i++) {
+        if (!regs[i]->ifFree) {
+            regs[i]->dirty++;
+            farthest = farthest > regs[i]->dirty ? farthest:regs[i]->dirty;
+        }
+    }
+    for (int i = 8; i <= 25; i++) {
+        if (!regs[i]->ifFree) {
+            if (regs[i]->dirty == farthest) {
+                spillReg(i);
+                return i;
+            }
+        }
+    }
+}
+
 int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     char* varName = NULL;
     if(op->kind == TEMP_OP || op->kind == CONSTANT){
@@ -73,64 +97,7 @@ int getReg(Operand op) {    // VARIABLE, ADDRESS, ADDTOVAL; TEMP_OP; CONSTANT;
     }
 
     AddressDescription newAddr = (AddressDescription)malloc(sizeof(union AddressDescription_));
-    int regNo = -1;
-    for (int i = 8; i <= 25; i++) {// t0~t9 s0~s7
-        if (regs[i]->ifFree) {
-            regNo = i;
-            break;
-        }
-    }
-    if (regNo == -1) {// all regs in use
-        int farthest = -99999;
-        for (int i = 8; i <= 25; i++) {
-            if (!regs[i]->ifFree) {
-                regs[i]->dirty++;
-                farthest = farthest > regs[i]->dirty ? farthest:regs[i]->dirty;
-            }
-        }
-        for (int i = 8; i <= 25; i++) {
-            if (!regs[i]->ifFree) {
-                if (regs[i]->dirty == farthest) {
-                    spillReg(i);
-                    /*
-                    char *spillName = regs[i]->var->varName;
-                    if (spillName[0] == '#') {
-                        VarDescription p = varHead;
-                        while (p->next) { // delete CONSTANT
-                            if (!strcmp(p->next->varName, spillName)) {
-                                VarDescription q = p->next;
-                                p->next = q->next;
-                                q->next = NULL;
-                                free(q);
-                                break;
-                            }
-                            p = p->next;
-                        }
-                    } else {
-                        VarDescription p = varHead;
-                        while(p->next) {
-                            if(!strcmp(p->next->varName, spillName)) {
-                                VarDescription q = p->next;
-                                q->addrDescription[0] = NULL; 
-                                if  (q->addrDescription[2] == NULL) {
-                                    q->addrDescription[1] = (AddressDescription)malloc(sizeof(union AddressDescription_));
-                                    fprintf(fp, "addi $sp, $sp, -4\n");
-                                    fprintf(fp, "sw %s, 0($sp)\n", regs[i]->name);
-                                    nowOffset -= 4;
-                                    q->addrDescription[1]->offset = nowOffset;
-                                }
-                                break;
-                            }
-                            p = p->next;
-                        }
-                    }
-                    */
-                    regNo = i;
-                    break;
-                }
-            }
-        }
-    }
+    int regNo = getFreeReg();
     newAddr->regNo = regNo;
     regs[regNo]->ifFree = false;
     regs[regNo]->dirty = 0;
@@ -556,8 +523,6 @@ void printObjectCode(char *fileName) {
                 fprintf(fp, "lw $fp, -8($fp)\n");
 
                 fprintf(fp, "jr $ra\n");
-                
-                nowOffset = 0;
                 break;
             }
             
@@ -566,6 +531,14 @@ void printObjectCode(char *fileName) {
                 break;
             }
             case ARG:{
+                int paramsNum = 0;
+                InterCode q = p;
+                while(q->kind == ARG){
+                    paramsNum ++;
+                    q = q->next;
+                }
+                paramNum = paramsNum;
+
                 // save all active regs{$t0 ~ $t9} in stack
                 for(int i=8;i<=15;i++){ // $t0~$t7
                     if(!regs[i]->ifFree){
@@ -585,15 +558,6 @@ void printObjectCode(char *fileName) {
                         }
                     }
                 }
-
-                // VARIABLE, CONSTANT, ADDRESS(?)
-                int paramsNum = 0;
-                InterCode q = p;
-                while(q->kind == ARG){
-                    paramsNum ++;
-                    q = q->next;
-                }
-                paramNum = paramsNum;
 
                 while(p->kind == ARG){
                     Operand op = p->u.one.op;
@@ -754,21 +718,29 @@ void printObjectCode(char *fileName) {
                     newVar->addrDescription[2] = NULL;
 
                     AddressDescription newAddr = (AddressDescription)malloc(sizeof(union AddressDescription_));
+                    
+                    int freeReg = -1;
+                    if(paramsNum < 4){
+                        freeReg = getFreeReg();
+                        newAddr->regNo = freeReg;
+                        regs[freeReg]->ifFree = false;
+                        regs[freeReg]->dirty = 0;
+                    }
                     switch(paramsNum){
                         case 0:{
-                            newAddr->regNo = 4; // $a0
+                            fprintf(fp, "move %s, $a0\n", regs[freeReg]->name);
                             break;
                         }
                         case 1:{
-                            newAddr->regNo = 5; // $a1
+                            fprintf(fp, "move %s, $a1\n", regs[freeReg]->name);
                             break;
                         }
                         case 2:{
-                            newAddr->regNo = 6; // $a2
+                            fprintf(fp, "move %s, $a2\n", regs[freeReg]->name);
                             break;
                         }
                         case 3:{
-                            newAddr->regNo = 7; // $a3
+                            fprintf(fp, "move %s, $a3\n", regs[freeReg]->name);
                             break;
                         }
                         default:{
@@ -779,6 +751,7 @@ void printObjectCode(char *fileName) {
                     if(paramsNum < 4){
                         newVar->addrDescription[0] = newAddr;
                         newVar->addrDescription[1] = NULL;
+                        regs[freeReg]->var = newVar;
                     }else{
                         newVar->addrDescription[1] = newAddr;
                         newVar->addrDescription[0] = NULL;
